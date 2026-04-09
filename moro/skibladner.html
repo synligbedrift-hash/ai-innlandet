@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Skibladner 2026 – Styr Mjøsas stolthet | AI Innlandet</title>
+<meta name="description" content="Styr Skibladner mellom Hamar, Gjøvik og Lillehammer. Plukk opp passasjerer, unngå tåka, og bli Mjøsas beste AI-kaptein!">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    background: linear-gradient(180deg, #0a1628 0%, #1a3a5c 50%, #2d5a8a 100%);
+    color: #fff;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  .top-bar {
+    background: rgba(10, 22, 40, 0.9);
+    padding: 14px 24px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    backdrop-filter: blur(10px);
+  }
+  .top-bar a { color: #00d4ff; text-decoration: none; font-size: 0.9em; }
+  .top-bar .brand { font-weight: 800; letter-spacing: 1px; }
+  .container { max-width: 900px; margin: 0 auto; padding: 24px; text-align: center; }
+  h1 {
+    font-size: clamp(1.8em, 4vw, 2.8em);
+    margin-bottom: 8px;
+    background: linear-gradient(90deg, #00d4ff, #ff00ea);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 800;
+  }
+  .tagline { opacity: 0.8; margin-bottom: 24px; font-size: 1em; }
+
+  /* Game */
+  #game-wrap {
+    position: relative;
+    max-width: 800px;
+    margin: 0 auto;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    border: 2px solid rgba(255,255,255,0.15);
+  }
+  canvas {
+    display: block;
+    width: 100%;
+    background: linear-gradient(180deg, #87ceeb 0%, #4a90bc 40%, #2d5a8a 100%);
+  }
+
+  /* HUD */
+  .hud {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    right: 12px;
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    pointer-events: none;
+    flex-wrap: wrap;
+  }
+  .hud-item {
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(6px);
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-size: 0.85em;
+    border: 1px solid rgba(255,255,255,0.2);
+  }
+  .hud-item strong { color: #00d4ff; }
+
+  /* Kaptein-kommentar */
+  .captain-bubble {
+    position: absolute;
+    bottom: 80px;
+    left: 20px;
+    right: 20px;
+    background: rgba(0,0,0,0.75);
+    padding: 14px 18px;
+    border-radius: 14px;
+    border-left: 4px solid #ffd700;
+    font-size: 0.9em;
+    backdrop-filter: blur(6px);
+    display: none;
+    animation: slideIn 0.4s ease-out;
+  }
+  .captain-bubble.show { display: block; }
+  .captain-bubble strong { color: #ffd700; display: block; margin-bottom: 4px; font-size: 0.85em; }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Overlay (start/slutt) */
+  .overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(10, 22, 40, 0.92);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    padding: 24px;
+    text-align: center;
+    z-index: 10;
+  }
+  .overlay.hidden { display: none; }
+  .overlay h2 {
+    font-size: 2em;
+    margin-bottom: 12px;
+    background: linear-gradient(90deg, #00d4ff, #ff00ea);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .overlay p { max-width: 500px; margin-bottom: 20px; opacity: 0.9; line-height: 1.6; }
+  .overlay .score-display {
+    font-size: 3em;
+    font-weight: 800;
+    color: #ffd700;
+    margin: 16px 0;
+  }
+  .overlay button {
+    padding: 14px 32px;
+    font-size: 1.1em;
+    font-weight: 700;
+    background: linear-gradient(90deg, #00d4ff, #ff00ea);
+    color: #fff;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    margin: 6px;
+    transition: transform 0.2s;
+  }
+  .overlay button:hover { transform: translateY(-2px); }
+  .overlay button.secondary {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.3);
+  }
+  .controls-info {
+    margin-top: 16px;
+    padding: 16px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 10px;
+    font-size: 0.85em;
+    opacity: 0.8;
+    max-width: 420px;
+  }
+  .controls-info kbd {
+    display: inline-block;
+    background: rgba(255,255,255,0.15);
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-family: monospace;
+    margin: 0 2px;
+    border: 1px solid rgba(255,255,255,0.2);
+  }
+
+  /* Mobil-kontroller */
+  .mobile-controls {
+    display: none;
+    margin-top: 16px;
+    gap: 12px;
+    justify-content: center;
+  }
+  .mobile-btn {
+    width: 80px; height: 80px;
+    background: rgba(0,0,0,0.6);
+    border: 2px solid rgba(255,255,255,0.3);
+    border-radius: 50%;
+    color: #fff;
+    font-size: 1.8em;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+  }
+  .mobile-btn:active { background: #00d4ff; }
+  @media (hover: none) and (pointer: coarse) {
+    .mobile-controls { display: flex; }
+  }
+
+  /* Highscore */
+  .highscore-section {
+    max-width: 800px;
+    margin: 32px auto;
+    background: rgba(255,255,255,0.05);
+    border-radius: 16px;
+    padding: 24px;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  .highscore-section h3 { margin-bottom: 16px; color: #00d4ff; }
+  .highscore-list { list-style: none; }
+  .highscore-list li {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  .highscore-list li:first-child { font-weight: 700; color: #ffd700; }
+  .highscore-list .rank { opacity: 0.6; width: 40px; }
+
+  /* CTA til hovedside */
+  .cta-section {
+    max-width: 800px;
+    margin: 40px auto;
+    background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(255, 0, 234, 0.1));
+    border: 1px solid rgba(0, 212, 255, 0.3);
+    padding: 32px;
+    border-radius: 20px;
+    text-align: center;
+  }
+  .cta-section h3 {
+    font-size: 1.4em;
+    margin-bottom: 12px;
+    background: linear-gradient(90deg, #00d4ff, #ff00ea);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .cta-section p { opacity: 0.9; margin-bottom: 20px; line-height: 1.6; }
+  .cta-section a {
+    display: inline-block;
+    padding: 14px 32px;
+    background: linear-gradient(90deg, #00d4ff, #ff00ea);
+    color: #fff;
+    text-decoration: none;
+    border-radius: 50px;
+    font-weight: 700;
+    transition: transform 0.2s;
+  }
+  .cta-section a:hover { transform: translateY(-2px); }
+
+  footer {
+    text-align: center;
+    padding: 24px;
+    opacity: 0.5;
+    font-size: 0.85em;
+  }
+  footer a { color: #00d4ff; }
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <div class="brand">⚡ AI INNLANDET</div>
+  <a href="../index.html">← Tilbake til hovedsiden</a>
+</div>
+
+<div class="container">
+  <h1>⛴️ Skibladner 2026</h1>
+  <p class="tagline">Styr Mjøsas stolthet mellom Hamar, Gjøvik og Lillehammer. Plukk opp passasjerer, unngå tåka, og bli den beste AI-kapteinen i Innlandet!</p>
+
+  <div id="game-wrap">
+    <canvas id="game" width="800" height="500"></canvas>
+
+    <div class="hud">
+      <div class="hud-item">👥 Passasjerer: <strong id="passengers">0</strong></div>
+      <div class="hud-item">⛽ Drivstoff: <strong id="fuel">100%</strong></div>
+      <div class="hud-item">⭐ Poeng: <strong id="score">0</strong></div>
+      <div class="hud-item">🎯 Mål: <strong id="target">Hamar</strong></div>
+    </div>
+
+    <div class="captain-bubble" id="captain">
+      <strong>AI-kaptein Ola sier:</strong>
+      <span id="captain-text">Velkommen om bord!</span>
+    </div>
+
+    <div class="overlay" id="start-overlay">
+      <h2>⛴️ Velkommen, kaptein!</h2>
+      <p>Du skal styre Skibladner mellom de tre Mjøs-byene. Plukk opp passasjerer ved bryggene, unngå tåkebanker og spar drivstoff. Jo flere passasjerer og byer du besøker, jo høyere poeng!</p>
+      <div class="controls-info">
+        <strong>Kontroller:</strong><br>
+        <kbd>←</kbd> <kbd>→</kbd> for å styre<br>
+        <kbd>↑</kbd> for fart, <kbd>↓</kbd> for å bremse<br>
+        <small>(På mobil: bruk knappene under)</small>
+      </div>
+      <button onclick="startGame()">🚀 Start reisen</button>
+    </div>
+
+    <div class="overlay hidden" id="end-overlay">
+      <h2 id="end-title">Reisen er over!</h2>
+      <p id="end-message">Du gjorde en god jobb, kaptein.</p>
+      <div class="score-display" id="final-score">0</div>
+      <div>
+        <button onclick="saveAndRestart()">🏆 Lagre poeng og spill igjen</button>
+        <button class="secondary" onclick="shareScore()">📤 Del på Facebook</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="mobile-controls">
+    <button class="mobile-btn" id="btn-left">◀</button>
+    <button class="mobile-btn" id="btn-up">▲</button>
+    <button class="mobile-btn" id="btn-right">▶</button>
+  </div>
+
+  <div class="highscore-section">
+    <h3>🏆 Topplista – Innlandets beste kapteiner</h3>
+    <ol class="highscore-list" id="highscore-list">
+      <li><span class="rank">—</span><span>Ingen poeng ennå – bli den første!</span><span></span></li>
+    </ol>
+  </div>
+
+  <div class="cta-section">
+    <h3>🤖 Visste du?</h3>
+    <p>AI-kaptein Ola har 50 ferdigskrevne replikker. Forestill deg om han var koblet til ekte AI – da ville han kjent både været, ruten og hver enkelt passasjer. <strong>Det er akkurat sånt vi bygger for bedrifter i Innlandet.</strong></p>
+    <a href="../index.html#kontakt">Bestill gratis AI-kartlegging →</a>
+  </div>
+</div>
+
+<footer>
+  <p>Laget av <a href="../index.html">AI Innlandet</a> · Et lite stykke Innlandet-moro</p>
+</footer>
+
+<script>
+// =====================================================
+// SKIBLADNER 2026 - Game logic
+// =====================================================
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const W = canvas.width;
+const H = canvas.height;
+
+// Byer
+const CITIES = [
+  { name: 'Hamar', x: 120, y: 400, color: '#e74c3c' },
+  { name: 'Gjøvik', x: 400, y: 200, color: '#f39c12' },
+  { name: 'Lillehammer', x: 680, y: 80, color: '#2ecc71' }
+];
+
+// Kaptein-replikker
+const CAPTAIN_QUOTES = {
+  start: [
+    "Velkommen om bord! Mjøsa kaller.",
+    "Full maskin! Vi har passasjerer som venter.",
+    "Fin dag for en tur på Mjøsa, sjef!",
+    "Husk: Mjøsa er Norges største innsjø!"
+  ],
+  pickup: [
+    "Gode passasjerer, dette blir stas!",
+    "Nok en fornøyd Innlandsbo om bord.",
+    "Flotte folk, ja. Skibladner lever videre!",
+    "Der tok vi ombord enda en reisende!",
+    "Nydelig! Mer folk, mer moro."
+  ],
+  cityReached: [
+    "Perfekt tilbakelegging!",
+    "Der er vi framme, sjef!",
+    "Se der ja – rett på brygga!",
+    "Du styrer som en ekte kaptein!"
+  ],
+  fogWarning: [
+    "Obs! Tåkebank rett forut!",
+    "Kjør forsiktig, det er tåke i lufta.",
+    "Der kommer tåka – vær på vakt!"
+  ],
+  fogHit: [
+    "Au! Vi mistet noen passasjerer i tåka!",
+    "Det der var en stygg en. Mer forsiktig neste gang.",
+    "Pass på, vi er ikke en isbryter!"
+  ],
+  lowFuel: [
+    "Drivstoffet begynner å gå tomt, sjef!",
+    "Kjør til nærmeste brygge snart!",
+    "Vi trenger påfyll – nå!"
+  ],
+  random: [
+    "Visste du at Skibladner ble bygget i 1856?",
+    "Mjøsa har et kritthvitt speilbilde i dag.",
+    "Hadde det bare vært lokomotivpris på brensel nå...",
+    "Helgøya på babord side – fint sted.",
+    "Det lukter kaffekok fra salongen.",
+    "Dette er ikke en ekte Skibladner, men moro er det!",
+    "Om Bjørnson hadde sett oss nå..."
+  ]
+};
+
+// Game state
+let boat = { x: 120, y: 400, vx: 0, vy: 0, angle: 0 };
+let passengers = 0;
+let fuel = 100;
+let score = 0;
+let currentTargetIdx = 1; // Starter i Hamar (0), skal til Gjøvik (1)
+let fogBanks = [];
+let clouds = [];
+let gameRunning = false;
+let gameTime = 0;
+let keys = {};
+let lastQuoteTime = 0;
+
+// Tegn piksel-skibladner
+function drawBoat() {
+  ctx.save();
+  ctx.translate(boat.x, boat.y);
+  ctx.rotate(boat.angle);
+
+  // Skrog
+  ctx.fillStyle = '#8b4513';
+  ctx.fillRect(-25, -5, 50, 12);
+  ctx.fillStyle = '#654321';
+  ctx.fillRect(-25, 5, 50, 3);
+
+  // Dekk (hvit)
+  ctx.fillStyle = '#f4f4f4';
+  ctx.fillRect(-20, -10, 40, 5);
+
+  // Hjulhus (hvit/rød)
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(-12, -18, 24, 10);
+  ctx.fillStyle = '#c0392b';
+  ctx.fillRect(-12, -18, 24, 2);
+
+  // Skorstein
+  ctx.fillStyle = '#2c2c2c';
+  ctx.fillRect(-3, -28, 6, 12);
+  ctx.fillStyle = '#c0392b';
+  ctx.fillRect(-4, -28, 8, 2);
+
+  // Hjul
+  ctx.fillStyle = '#654321';
+  ctx.beginPath();
+  ctx.arc(-18, 0, 8, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.arc(18, 0, 8, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Røyk
+  if (gameRunning) {
+    ctx.fillStyle = 'rgba(200,200,200,0.6)';
+    ctx.beginPath();
+    ctx.arc(0, -32 - Math.sin(gameTime * 0.1) * 2, 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(200,200,200,0.3)';
+    ctx.beginPath();
+    ctx.arc(2, -38 - Math.sin(gameTime * 0.08) * 3, 5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  ctx.restore();
+}
+
+// Bakgrunn: fjell, land, vann
+function drawBackground() {
+  // Himmel-gradient
+  const sky = ctx.createLinearGradient(0, 0, 0, H);
+  sky.addColorStop(0, '#87ceeb');
+  sky.addColorStop(0.4, '#4a90bc');
+  sky.addColorStop(1, '#1e4d6b');
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, W, H);
+
+  // Fjell i bakgrunnen
+  ctx.fillStyle = '#2c4a5e';
+  ctx.beginPath();
+  ctx.moveTo(0, 120);
+  ctx.lineTo(150, 40);
+  ctx.lineTo(280, 90);
+  ctx.lineTo(420, 30);
+  ctx.lineTo(550, 70);
+  ctx.lineTo(700, 20);
+  ctx.lineTo(800, 60);
+  ctx.lineTo(800, 140);
+  ctx.lineTo(0, 140);
+  ctx.closePath();
+  ctx.fill();
+
+  // Fjell litt nærmere
+  ctx.fillStyle = '#3a5a72';
+  ctx.beginPath();
+  ctx.moveTo(0, 160);
+  ctx.lineTo(80, 100);
+  ctx.lineTo(200, 140);
+  ctx.lineTo(340, 90);
+  ctx.lineTo(480, 130);
+  ctx.lineTo(620, 100);
+  ctx.lineTo(800, 140);
+  ctx.lineTo(800, 180);
+  ctx.lineTo(0, 180);
+  ctx.closePath();
+  ctx.fill();
+
+  // Vann
+  const water = ctx.createLinearGradient(0, 180, 0, H);
+  water.addColorStop(0, '#3a6b8c');
+  water.addColorStop(1, '#1a3a5c');
+  ctx.fillStyle = water;
+  ctx.fillRect(0, 180, W, H - 180);
+
+  // Bølger
+  ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i < 8; i++) {
+    const y = 200 + i * 40;
+    ctx.beginPath();
+    for (let x = 0; x < W; x += 10) {
+      const yOff = Math.sin((x + gameTime * 0.5 + i * 20) * 0.05) * 2;
+      if (x === 0) ctx.moveTo(x, y + yOff);
+      else ctx.lineTo(x, y + yOff);
+    }
+    ctx.stroke();
+  }
+}
+
+// Tegn skyer
+function drawClouds() {
+  clouds.forEach(c => {
+    ctx.fillStyle = `rgba(255,255,255,${c.opacity})`;
+    ctx.beginPath();
+    ctx.arc(c.x, c.y, c.r, 0, Math.PI * 2);
+    ctx.arc(c.x + c.r * 0.7, c.y, c.r * 0.8, 0, Math.PI * 2);
+    ctx.arc(c.x - c.r * 0.7, c.y, c.r * 0.7, 0, Math.PI * 2);
+    ctx.fill();
+    c.x += c.vx;
+    if (c.x > W + 50) c.x = -50;
+  });
+}
+
+// Byer
+function drawCities() {
+  CITIES.forEach((city, idx) => {
+    const isTarget = idx === currentTargetIdx;
+
+    // Brygge
+    ctx.fillStyle = '#8b4513';
+    ctx.fillRect(city.x - 20, city.y - 3, 40, 6);
+
+    // Bygning
+    ctx.fillStyle = city.color;
+    ctx.fillRect(city.x - 15, city.y - 30, 30, 27);
+
+    // Tak
+    ctx.fillStyle = '#2c2c2c';
+    ctx.beginPath();
+    ctx.moveTo(city.x - 18, city.y - 30);
+    ctx.lineTo(city.x, city.y - 45);
+    ctx.lineTo(city.x + 18, city.y - 30);
+    ctx.closePath();
+    ctx.fill();
+
+    // Vinduer
+    ctx.fillStyle = '#ffeb3b';
+    ctx.fillRect(city.x - 10, city.y - 22, 5, 5);
+    ctx.fillRect(city.x + 5, city.y - 22, 5, 5);
+    ctx.fillRect(city.x - 10, city.y - 12, 5, 5);
+    ctx.fillRect(city.x + 5, city.y - 12, 5, 5);
+
+    // Navn
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 14px -apple-system, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(city.name, city.x, city.y - 52);
+
+    // Mål-indikator
+    if (isTarget) {
+      ctx.strokeStyle = '#ffd700';
+      ctx.lineWidth = 3;
+      ctx.setLineDash([5, 5]);
+      ctx.beginPath();
+      ctx.arc(city.x, city.y - 15, 40 + Math.sin(gameTime * 0.08) * 4, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Pil som peker mot målet
+      ctx.fillStyle = '#ffd700';
+      ctx.font = 'bold 16px -apple-system, sans-serif';
+      ctx.fillText('🎯', city.x, city.y - 65);
+    }
+  });
+}
+
+// Tåkebanker
+function drawFog() {
+  fogBanks.forEach(fog => {
+    ctx.fillStyle = `rgba(220, 220, 230, ${fog.opacity})`;
+    ctx.beginPath();
+    ctx.arc(fog.x, fog.y, fog.r, 0, Math.PI * 2);
+    ctx.arc(fog.x + 20, fog.y - 5, fog.r * 0.8, 0, Math.PI * 2);
+    ctx.arc(fog.x - 20, fog.y + 5, fog.r * 0.8, 0, Math.PI * 2);
+    ctx.fill();
+
+    fog.x += fog.vx;
+    if (fog.x < -80) fog.x = W + 80;
+    if (fog.x > W + 80) fog.x = -80;
+  });
+}
+
+// Kollisjon
+function checkCollisions() {
+  // Tåke
+  fogBanks.forEach(fog => {
+    const dx = boat.x - fog.x;
+    const dy = boat.y - fog.y;
+    const dist = Math.sqrt(dx*dx + dy*dy);
+    if (dist < fog.r + 15 && !fog.hit) {
+      fog.hit = true;
+      fog.opacity = Math.max(0.1, fog.opacity - 0.3);
+      passengers = Math.max(0, passengers - 1);
+      fuel = Math.max(0, fuel - 5);
+      showCaptain('fogHit');
+      setTimeout(() => { fog.hit = false; }, 1500);
+    }
+  });
+
+  // By nådd
+  const target = CITIES[currentTargetIdx];
+  const dx = boat.x - target.x;
+  const dy = boat.y - target.y;
+  const dist = Math.sqrt(dx*dx + dy*dy);
+  if (dist < 35) {
+    // Bonus
+    score += 100 + passengers * 50;
+    const newPassengers = 3 + Math.floor(Math.random() * 4);
+    passengers += newPassengers;
+    fuel = Math.min(100, fuel + 30);
+    showCaptain('cityReached');
+    setTimeout(() => showCaptain('pickup'), 1500);
+
+    // Ny mål
+    let nextIdx;
+    do {
+      nextIdx = Math.floor(Math.random() * CITIES.length);
+    } while (nextIdx === currentTargetIdx);
+    currentTargetIdx = nextIdx;
+    document.getElementById('target').textContent = CITIES[currentTargetIdx].name;
+  }
+}
+
+// Vis kaptein-replikk
+function showCaptain(type) {
+  const quotes = CAPTAIN_QUOTES[type] || CAPTAIN_QUOTES.random;
+  const quote = quotes[Math.floor(Math.random() * quotes.length)];
+  const el = document.getElementById('captain');
+  document.getElementById('captain-text').textContent = quote;
+  el.classList.add('show');
+  clearTimeout(window.captainTimer);
+  window.captainTimer = setTimeout(() => el.classList.remove('show'), 3500);
+  lastQuoteTime = gameTime;
+}
+
+// Game loop
+function update() {
+  if (!gameRunning) return;
+
+  gameTime++;
+
+  // Input
+  const turnSpeed = 0.04;
+  const accel = 0.1;
+  const maxSpeed = 3;
+  const friction = 0.97;
+
+  if (keys['ArrowLeft'] || keys['a']) boat.angle -= turnSpeed;
+  if (keys['ArrowRight'] || keys['d']) boat.angle += turnSpeed;
+  if (keys['ArrowUp'] || keys['w']) {
+    boat.vx += Math.cos(boat.angle - Math.PI/2) * accel;
+    boat.vy += Math.sin(boat.angle - Math.PI/2) * accel;
+    fuel -= 0.08;
+  }
+  if (keys['ArrowDown'] || keys['s']) {
+    boat.vx *= 0.9;
+    boat.vy *= 0.9;
+  }
+
+  // Begrens fart
+  const speed = Math.sqrt(boat.vx*boat.vx + boat.vy*boat.vy);
+  if (speed > maxSpeed) {
+    boat.vx = (boat.vx / speed) * maxSpeed;
+    boat.vy = (boat.vy / speed) * maxSpeed;
+  }
+
+  boat.vx *= friction;
+  boat.vy *= friction;
+  boat.x += boat.vx;
+  boat.y += boat.vy;
+
+  // Grenser
+  if (boat.x < 20) { boat.x = 20; boat.vx = 0; }
+  if (boat.x > W - 20) { boat.x = W - 20; boat.vx = 0; }
+  if (boat.y < 200) { boat.y = 200; boat.vy = 0; }
+  if (boat.y > H - 20) { boat.y = H - 20; boat.vy = 0; }
+
+  // Passiv drivstoff-bruk
+  fuel -= 0.01;
+
+  checkCollisions();
+
+  // Tilfeldige kommentarer
+  if (gameTime - lastQuoteTime > 400 && Math.random() < 0.01) {
+    showCaptain('random');
+  }
+
+  // Lavt drivstoff-varsling
+  if (fuel < 20 && fuel > 19.9) {
+    showCaptain('lowFuel');
+  }
+
+  // Game over
+  if (fuel <= 0) {
+    endGame('Slutt på drivstoff!', 'Skibladner dreiv i land ved Helgøya. Du samlet ' + score + ' poeng!');
+  }
+
+  // HUD
+  document.getElementById('passengers').textContent = passengers;
+  document.getElementById('fuel').textContent = Math.max(0, Math.round(fuel)) + '%';
+  document.getElementById('score').textContent = score + Math.floor(gameTime / 60);
+}
+
+function render() {
+  drawBackground();
+  drawClouds();
+  drawCities();
+  drawFog();
+  drawBoat();
+}
+
+function loop() {
+  update();
+  render();
+  requestAnimationFrame(loop);
+}
+
+// Start
+function startGame() {
+  boat = { x: 120, y: 400, vx: 0, vy: 0, angle: 0 };
+  passengers = 0;
+  fuel = 100;
+  score = 0;
+  currentTargetIdx = 1;
+  gameTime = 0;
+
+  // Lag tåkebanker
+  fogBanks = [];
+  for (let i = 0; i < 4; i++) {
+    fogBanks.push({
+      x: 150 + Math.random() * 500,
+      y: 230 + Math.random() * 200,
+      r: 30 + Math.random() * 20,
+      vx: (Math.random() - 0.5) * 0.5,
+      opacity: 0.6,
+      hit: false
+    });
+  }
+
+  // Lag skyer
+  clouds = [];
+  for (let i = 0; i < 6; i++) {
+    clouds.push({
+      x: Math.random() * W,
+      y: 30 + Math.random() * 60,
+      r: 15 + Math.random() * 20,
+      vx: 0.2 + Math.random() * 0.3,
+      opacity: 0.4 + Math.random() * 0.3
+    });
+  }
+
+  document.getElementById('target').textContent = CITIES[currentTargetIdx].name;
+  document.getElementById('start-overlay').classList.add('hidden');
+  document.getElementById('end-overlay').classList.add('hidden');
+  gameRunning = true;
+  showCaptain('start');
+}
+
+function endGame(title, msg) {
+  gameRunning = false;
+  const finalScore = score + Math.floor(gameTime / 60);
+  document.getElementById('end-title').textContent = title;
+  document.getElementById('end-message').textContent = msg;
+  document.getElementById('final-score').textContent = finalScore + ' poeng';
+  document.getElementById('end-overlay').classList.remove('hidden');
+}
+
+// Highscores
+function loadHighscores() {
+  const scores = JSON.parse(localStorage.getItem('skibladner_scores') || '[]');
+  const list = document.getElementById('highscore-list');
+  if (scores.length === 0) {
+    list.innerHTML = '<li><span class="rank">—</span><span>Ingen poeng ennå – bli den første!</span><span></span></li>';
+    return;
+  }
+  list.innerHTML = scores.slice(0, 10).map((s, i) =>
+    `<li><span class="rank">${i+1}.</span><span>${s.name}</span><span>${s.score} poeng</span></li>`
+  ).join('');
+}
+
+function saveAndRestart() {
+  const finalScore = score + Math.floor(gameTime / 60);
+  const name = prompt('Gratulerer, kaptein! Skriv navnet ditt:', 'Kaptein') || 'Anonym';
+  const scores = JSON.parse(localStorage.getItem('skibladner_scores') || '[]');
+  scores.push({ name: name.substring(0, 20), score: finalScore, date: new Date().toISOString() });
+  scores.sort((a, b) => b.score - a.score);
+  localStorage.setItem('skibladner_scores', JSON.stringify(scores.slice(0, 10)));
+  loadHighscores();
+  startGame();
+}
+
+function shareScore() {
+  const finalScore = score + Math.floor(gameTime / 60);
+  const text = `Jeg fikk ${finalScore} poeng i Skibladner 2026! ⛴️ Klarer du bedre?`;
+  const url = window.location.href;
+  if (navigator.share) {
+    navigator.share({ title: 'Skibladner 2026', text, url });
+  } else {
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}&quote=${encodeURIComponent(text)}`, '_blank');
+  }
+}
+
+// Tastatur
+window.addEventListener('keydown', e => { keys[e.key] = true; });
+window.addEventListener('keyup', e => { keys[e.key] = false; });
+
+// Mobil-kontroller
+document.getElementById('btn-left').addEventListener('touchstart', e => { e.preventDefault(); keys['ArrowLeft'] = true; });
+document.getElementById('btn-left').addEventListener('touchend', e => { e.preventDefault(); keys['ArrowLeft'] = false; });
+document.getElementById('btn-right').addEventListener('touchstart', e => { e.preventDefault(); keys['ArrowRight'] = true; });
+document.getElementById('btn-right').addEventListener('touchend', e => { e.preventDefault(); keys['ArrowRight'] = false; });
+document.getElementById('btn-up').addEventListener('touchstart', e => { e.preventDefault(); keys['ArrowUp'] = true; });
+document.getElementById('btn-up').addEventListener('touchend', e => { e.preventDefault(); keys['ArrowUp'] = false; });
+
+// Start loop
+loadHighscores();
+loop();
+</script>
+</body>
+</html>
