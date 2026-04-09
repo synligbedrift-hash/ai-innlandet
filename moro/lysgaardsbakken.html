@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lysgårdsbakken Hopp – Hopprenn fra Lillehammers OL-bakke | AI Innlandet</title>
+<meta name="description" content="Hopprenn fra Lillehammers OL-bakke. Timing på avsats, riktig stilling i lufta, perfekt telemark-landing. AI-trener gir poeng.">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    background: linear-gradient(180deg, #0a1a2a 0%, #1a3a5c 50%, #d0e8f5 100%);
+    color: #fff;
+    min-height: 100vh;
+  }
+  .top-bar {
+    background: rgba(10, 26, 42, 0.9);
+    padding: 14px 24px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    backdrop-filter: blur(10px);
+  }
+  .top-bar a { color: #00d4ff; text-decoration: none; font-size: 0.9em; }
+  .top-bar .brand { font-weight: 800; letter-spacing: 1px; }
+  .container { max-width: 900px; margin: 0 auto; padding: 24px; text-align: center; }
+  h1 {
+    font-size: clamp(1.8em, 4vw, 2.6em);
+    margin-bottom: 8px;
+    background: linear-gradient(90deg, #00d4ff, #ff00ea);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 800;
+  }
+  .tagline { opacity: 0.85; margin-bottom: 20px; font-size: 1em; max-width: 680px; margin-left:auto; margin-right:auto; line-height: 1.6; }
+  #game-wrap {
+    position: relative;
+    max-width: 800px;
+    margin: 0 auto;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    border: 2px solid rgba(255,255,255,0.15);
+  }
+  canvas { display: block; width: 100%; touch-action: none; }
+  .hud {
+    position: absolute;
+    top: 12px; left: 12px; right: 12px;
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    pointer-events: none;
+    flex-wrap: wrap;
+  }
+  .hud-item {
+    background: rgba(0,0,0,0.7);
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 0.9em;
+    border: 1px solid rgba(0,212,255,0.3);
+  }
+  .phase-indicator {
+    position: absolute;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.75);
+    padding: 10px 20px;
+    border-radius: 999px;
+    font-weight: 800;
+    font-size: 0.95em;
+    border: 1px solid rgba(0,212,255,0.4);
+    pointer-events: none;
+  }
+  .phase-indicator.hidden { display: none; }
+  .overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(10,26,42,0.93);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 30px;
+    backdrop-filter: blur(6px);
+  }
+  .overlay.hidden { display: none; }
+  .overlay h2 {
+    font-size: 2em;
+    margin-bottom: 12px;
+    background: linear-gradient(90deg, #00d4ff, #ff00ea);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .overlay p { opacity: 0.9; margin-bottom: 18px; max-width: 480px; line-height: 1.6; }
+  .btn {
+    background: linear-gradient(135deg, #00d4ff, #ff00ea);
+    color: #fff;
+    border: none;
+    padding: 14px 32px;
+    border-radius: 999px;
+    font-weight: 800;
+    font-size: 1em;
+    cursor: pointer;
+    box-shadow: 0 8px 24px rgba(0,212,255,0.3);
+  }
+  .btn:hover { transform: translateY(-2px); }
+  .footer-cta {
+    margin-top: 30px;
+    padding: 20px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  .footer-cta a { color: #00d4ff; font-weight: 700; }
+  .controls-hint {
+    margin-top: 14px;
+    opacity: 0.7;
+    font-size: 0.85em;
+  }
+  .score-breakdown {
+    background: rgba(0,0,0,0.3);
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    font-size: 0.9em;
+    line-height: 1.8;
+    text-align: left;
+    min-width: 260px;
+  }
+  .score-breakdown .row { display: flex; justify-content: space-between; gap: 20px; }
+  .score-breakdown .total { margin-top: 6px; padding-top: 6px; border-top: 1px solid rgba(255,255,255,0.2); font-weight: 800; color: #00d4ff; }
+</style>
+</head>
+<body>
+  <div class="top-bar">
+    <a href="../index.html" class="brand">← AI INNLANDET</a>
+    <a href="../index.html#moro">Flere spill</a>
+  </div>
+
+  <div class="container">
+    <h1>Lysgårdsbakken Hopp</h1>
+    <p class="tagline">Hopprenn fra Lillehammers olympiske bakke. Tre timing-trykk: avsats, stilling i lufta og landing. AI-treneren analyserer hoppet og gir stilpoeng.</p>
+
+    <div id="game-wrap">
+      <canvas id="game" width="800" height="500"></canvas>
+
+      <div class="hud">
+        <div class="hud-item">Lengde: <span id="length">0.0</span> m</div>
+        <div class="hud-item">Stilpoeng: <span id="style">0.0</span></div>
+        <div class="hud-item">Rekord: <span id="best">0.0</span></div>
+      </div>
+
+      <div class="phase-indicator hidden" id="phase">
+        <span id="phase-text">Vent...</span>
+      </div>
+
+      <div class="overlay" id="start">
+        <h2>Velkommen til Lysgårdsbakken ⛷️</h2>
+        <p>Tre trykk, ett hopp:<br>
+        <strong>1.</strong> Trykk <kbd>MELLOMROM</kbd> på avsatsen – helt på tuppen gir maks utslag.<br>
+        <strong>2.</strong> Hold perfekt V-stilling i lufta med trykk.<br>
+        <strong>3.</strong> Land med telemark: slipp i riktig øyeblikk.</p>
+        <button class="btn" onclick="startJump()">START NEDKJØRING</button>
+      </div>
+
+      <div class="overlay hidden" id="end">
+        <h2 id="end-title">Hoppet er i boks! 🎿</h2>
+        <div class="score-breakdown" id="breakdown"></div>
+        <button class="btn" onclick="startJump()">NYTT HOPP</button>
+      </div>
+    </div>
+    <p class="controls-hint">⌨️ MELLOMROM eller klikk for å trykke · AI-treneren Maren gir stilpoeng 0–20</p>
+
+    <div class="footer-cta">
+      <p>Maren-treneren er fiksjon, men AI som analyserer video og data i sanntid er virkelig – vi bygger sånt for bedrifter.<br>
+      <a href="../index.html#kontakt">Bestill AI-kartlegging →</a></p>
+    </div>
+  </div>
+
+<script>
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+
+const lengthEl = document.getElementById('length');
+const styleEl = document.getElementById('style');
+const bestEl = document.getElementById('best');
+const startOv = document.getElementById('start');
+const endOv = document.getElementById('end');
+const endTitle = document.getElementById('end-title');
+const breakdown = document.getElementById('breakdown');
+const phaseIndicator = document.getElementById('phase');
+const phaseText = document.getElementById('phase-text');
+
+let best = parseFloat(localStorage.getItem('lysgaardsBest') || '0');
+bestEl.textContent = best.toFixed(1);
+
+// Game state
+let state = 'menu'; // menu, inrun, takeoff, flight, landing, crash, over
+let t = 0;
+let jumper = { x: 60, y: 100, vx: 0, vy: 0, angle: 0, form: 0.5, landed: false };
+let result = { length: 0, takeoff: 0, form: 0, landing: 0, style: 0, total: 0 };
+
+// Takeoff timing
+let inrunProgress = 0;
+let takeoffWindow = 0; // 0..1, best near 1
+let takeoffPressed = false;
+let takeoffQuality = 0;
+
+// Flight form
+let formMeter = 0.5;
+let formPressed = false;
+let formQuality = 0;
+let flightTime = 0;
+
+// Landing
+let landingWindow = 0;
+let landingPressed = false;
+let landingQuality = 0;
+
+// Hill geometry
+// Inrun: from top-left down to takeoff point
+const inrunStart = { x: 60, y: 60 };
+const takeoffPoint = { x: 280, y: 280 };
+// Landing hill: curve downward
+function hillY(x) {
+  // Landing hill from takeoff onwards — steeper then flattens
+  if (x < takeoffPoint.x) {
+    // inrun slope
+    const progress = (x - inrunStart.x) / (takeoffPoint.x - inrunStart.x);
+    return inrunStart.y + progress * (takeoffPoint.y - inrunStart.y);
+  }
+  const dx = x - takeoffPoint.x;
+  // Exponential-ish curve downward, then flattens
+  return takeoffPoint.y + Math.pow(dx, 1.5) * 0.08;
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === ' ') {
+    e.preventDefault();
+    pressAction();
+  }
+});
+canvas.addEventListener('click', pressAction);
+canvas.addEventListener('touchstart', e => { e.preventDefault(); pressAction(); }, { passive: false });
+
+function pressAction() {
+  if (state === 'inrun' && !takeoffPressed) {
+    takeoffPressed = true;
+    // Quality: best when inrunProgress near 1.0 (at the edge)
+    // takeoffWindow goes 0→1 across the last portion
+    const q = Math.max(0, 1 - Math.abs(1 - takeoffWindow) * 3);
+    takeoffQuality = q;
+    // Initial velocity based on quality
+    jumper.vx = 4 + q * 3;
+    jumper.vy = -3 - q * 3;
+    state = 'flight';
+    flightTime = 0;
+    phaseText.textContent = 'LUFT – hold stilling!';
+  } else if (state === 'flight' && !formPressed) {
+    formPressed = true;
+    // Best when formMeter is near 1.0 (perfect V)
+    formQuality = Math.max(0, 1 - Math.abs(1 - formMeter) * 2);
+    phaseText.textContent = 'Klar for landing...';
+  } else if (state === 'landing' && !landingPressed) {
+    landingPressed = true;
+    landingQuality = Math.max(0, 1 - Math.abs(1 - landingWindow) * 3);
+    finishJump();
+  } else if (state === 'over' || state === 'menu') {
+    // ignored — use button
+  }
+}
+
+function startJump() {
+  state = 'inrun';
+  t = 0;
+  jumper = { x: inrunStart.x, y: inrunStart.y - 14, vx: 0, vy: 0, angle: 0.5, form: 0.5, landed: false };
+  inrunProgress = 0;
+  takeoffWindow = 0;
+  takeoffPressed = false;
+  takeoffQuality = 0;
+  formMeter = 0.5;
+  formPressed = false;
+  formQuality = 0;
+  landingWindow = 0;
+  landingPressed = false;
+  landingQuality = 0;
+  flightTime = 0;
+  result = { length: 0, takeoff: 0, form: 0, landing: 0, style: 0, total: 0 };
+  startOv.classList.add('hidden');
+  endOv.classList.add('hidden');
+  phaseIndicator.classList.remove('hidden');
+  phaseText.textContent = 'SKI NED – trykk på tuppen!';
+}
+
+function finishJump() {
+  // Length: depends on takeoff and form
+  const baseLen = 80;
+  const length = baseLen + takeoffQuality * 60 + formQuality * 40;
+  result.length = length;
+  result.takeoff = Math.round(takeoffQuality * 20 * 10) / 10;
+  result.form = Math.round(formQuality * 20 * 10) / 10;
+  result.landing = Math.round(landingQuality * 20 * 10) / 10;
+  const style = (result.takeoff + result.form + result.landing) / 3;
+  result.style = Math.round(style * 10) / 10;
+  result.total = Math.round((length + style * 2) * 10) / 10;
+  lengthEl.textContent = length.toFixed(1);
+  styleEl.textContent = style.toFixed(1);
+
+  // Set jumper to landing position
+  state = 'over';
+  phaseIndicator.classList.add('hidden');
+
+  if (result.total > best) {
+    best = result.total;
+    localStorage.setItem('lysgaardsBest', best.toFixed(1));
+    bestEl.textContent = best.toFixed(1);
+  }
+
+  let trainerMsg = '';
+  if (landingQuality < 0.3) trainerMsg = '«Aua! Fallet ødela hoppet. Prøv å slippe landingsknappen rett før bakken.»';
+  else if (result.total > 180) trainerMsg = '«Fantastisk! Det der var verdensklasse!» 🏆';
+  else if (result.total > 140) trainerMsg = '«Fint hopp – du har stilen i orden.»';
+  else if (result.total > 100) trainerMsg = '«Helt greit, men timingen kan bli bedre.»';
+  else trainerMsg = '«Hm. Kanskje mer trening på avsatsen?»';
+
+  endTitle.textContent = landingQuality < 0.3 ? 'Fall i landingen! 💥' : 'Hoppet er i boks! 🎿';
+  breakdown.innerHTML = `
+    <div class="row"><span>Lengde</span><strong>${length.toFixed(1)} m</strong></div>
+    <div class="row"><span>Avsats</span><strong>${result.takeoff.toFixed(1)} / 20</strong></div>
+    <div class="row"><span>Luftstilling</span><strong>${result.form.toFixed(1)} / 20</strong></div>
+    <div class="row"><span>Landing</span><strong>${result.landing.toFixed(1)} / 20</strong></div>
+    <div class="row total"><span>Totalt</span><strong>${result.total.toFixed(1)}</strong></div>
+    <div style="margin-top:10px; opacity:0.85; font-style:italic;">AI-trener Maren: ${trainerMsg}</div>
+  `;
+  endOv.classList.remove('hidden');
+}
+
+function update(dt) {
+  t += dt;
+  if (state === 'inrun') {
+    inrunProgress = Math.min(1, inrunProgress + dt / 1200);
+    jumper.x = inrunStart.x + inrunProgress * (takeoffPoint.x - inrunStart.x);
+    jumper.y = hillY(jumper.x) - 14;
+    takeoffWindow = inrunProgress;
+    if (inrunProgress >= 1 && !takeoffPressed) {
+      // Missed takeoff — automatic weak jump
+      takeoffPressed = true;
+      takeoffQuality = 0.1;
+      jumper.vx = 3;
+      jumper.vy = -1.5;
+      state = 'flight';
+      phaseText.textContent = 'Glemte avsats!';
+    }
+  } else if (state === 'flight') {
+    flightTime += dt;
+    jumper.vy += 0.1 * dt / 16;
+    jumper.x += jumper.vx * dt / 16;
+    jumper.y += jumper.vy * dt / 16;
+    // Oscillate form unless locked
+    if (!formPressed) {
+      formMeter += dt / 800;
+      formMeter = ((formMeter % 2) > 1) ? 2 - (formMeter % 2) : (formMeter % 2);
+    }
+    jumper.angle = Math.min(0.7, Math.max(-0.2, Math.atan2(jumper.vy, jumper.vx) + 0.6));
+
+    // Check if close to landing hill
+    const hy = hillY(jumper.x);
+    if (jumper.y >= hy - 16) {
+      state = 'landing';
+      landingWindow = 0;
+      phaseText.textContent = 'LAND! trykk nå!';
+    }
+    if (jumper.x > W + 40) {
+      state = 'landing';
+      landingWindow = 1;
+      phaseText.textContent = 'LAND! trykk nå!';
+    }
+  } else if (state === 'landing') {
+    // Landing window is a brief ~400ms; good when pressed mid-window
+    landingWindow += dt / 400;
+    if (!landingPressed && landingWindow > 1.2) {
+      // Missed — auto fail
+      landingPressed = true;
+      landingQuality = 0;
+      finishJump();
+      return;
+    }
+    // Snap jumper onto hill
+    jumper.vy += 0.15 * dt / 16;
+    jumper.x += jumper.vx * dt / 16 * 0.8;
+    jumper.y += jumper.vy * dt / 16;
+    const hy = hillY(jumper.x);
+    if (jumper.y > hy - 12) {
+      jumper.y = hy - 12;
+      jumper.vy = 0;
+    }
+  }
+}
+
+// ---------- DRAW ----------
+
+function drawSky() {
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, '#0a1a2a');
+  g.addColorStop(0.6, '#3a5a7a');
+  g.addColorStop(1, '#d0e8f5');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, W, H);
+  // Distant mountains
+  ctx.fillStyle = '#4a6a85';
+  ctx.beginPath();
+  ctx.moveTo(0, 250);
+  ctx.lineTo(100, 180);
+  ctx.lineTo(180, 220);
+  ctx.lineTo(260, 170);
+  ctx.lineTo(360, 210);
+  ctx.lineTo(460, 160);
+  ctx.lineTo(560, 205);
+  ctx.lineTo(680, 175);
+  ctx.lineTo(W, 220);
+  ctx.lineTo(W, H);
+  ctx.lineTo(0, H);
+  ctx.closePath();
+  ctx.fill();
+  // Snow caps
+  ctx.fillStyle = 'rgba(255,255,255,0.6)';
+  ctx.beginPath();
+  ctx.moveTo(90, 190); ctx.lineTo(100, 180); ctx.lineTo(115, 192); ctx.closePath();
+  ctx.moveTo(250, 180); ctx.lineTo(260, 170); ctx.lineTo(275, 183); ctx.closePath();
+  ctx.moveTo(450, 170); ctx.lineTo(460, 160); ctx.lineTo(475, 174); ctx.closePath();
+  ctx.moveTo(670, 185); ctx.lineTo(680, 175); ctx.lineTo(695, 188); ctx.closePath();
+  ctx.fill();
+}
+
+function drawHill() {
+  // Snow hill
+  ctx.fillStyle = '#fff';
+  ctx.beginPath();
+  ctx.moveTo(0, H);
+  ctx.lineTo(0, inrunStart.y);
+  ctx.lineTo(inrunStart.x, inrunStart.y);
+  // Inrun down to takeoff
+  for (let x = inrunStart.x; x <= takeoffPoint.x; x += 4) {
+    ctx.lineTo(x, hillY(x) - 8);
+  }
+  // Takeoff edge
+  ctx.lineTo(takeoffPoint.x, takeoffPoint.y);
+  // Landing hill
+  for (let x = takeoffPoint.x; x <= W; x += 6) {
+    ctx.lineTo(x, hillY(x));
+  }
+  ctx.lineTo(W, H);
+  ctx.closePath();
+  ctx.fill();
+
+  // Inrun track line
+  ctx.strokeStyle = '#88b8d8';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  for (let x = inrunStart.x; x <= takeoffPoint.x; x += 4) {
+    const y = hillY(x) - 8;
+    if (x === inrunStart.x) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
+  // Distance markers on landing hill
+  ctx.fillStyle = '#0a1a2a';
+  ctx.font = 'bold 11px sans-serif';
+  ctx.textAlign = 'center';
+  const markers = [
+    { x: 380, label: '80 m' },
+    { x: 500, label: '100 m' },
+    { x: 620, label: '120 m' },
+    { x: 720, label: '140 m' }
+  ];
+  for (const m of markers) {
+    const y = hillY(m.x);
+    ctx.fillStyle = '#ffcc00';
+    ctx.fillRect(m.x - 1, y, 2, 10);
+    ctx.fillStyle = '#0a1a2a';
+    ctx.fillText(m.label, m.x, y + 24);
+  }
+
+  // Crowd on sides
+  ctx.fillStyle = '#333';
+  for (let i = 0; i < 30; i++) {
+    const x = 280 + (i * 17) % 500;
+    const y = hillY(x) + 30 + (i % 3) * 2;
+    ctx.beginPath();
+    ctx.arc(x, y, 2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function drawJumper() {
+  ctx.save();
+  ctx.translate(jumper.x, jumper.y);
+  if (state === 'flight' || state === 'landing' || state === 'over') {
+    ctx.rotate(jumper.angle);
+  }
+  // Skis
+  ctx.strokeStyle = '#ff3344';
+  ctx.lineWidth = 2;
+  const skiSpread = state === 'flight' ? formMeter * 0.4 : 0;
+  ctx.beginPath();
+  ctx.moveTo(-14, 10);
+  ctx.lineTo(18 + skiSpread * 10, 6 - skiSpread * 6);
+  ctx.moveTo(-14, 12);
+  ctx.lineTo(18 + skiSpread * 10, 10 + skiSpread * 6);
+  ctx.stroke();
+  // Body (suit)
+  ctx.fillStyle = '#00d4ff';
+  ctx.beginPath();
+  if (state === 'inrun') {
+    // Crouched
+    ctx.ellipse(0, 2, 9, 6, 0, 0, Math.PI * 2);
+  } else if (state === 'flight' || state === 'landing') {
+    // Leaning forward
+    ctx.ellipse(0, 0, 11, 5, 0, 0, Math.PI * 2);
+  } else {
+    ctx.ellipse(0, 0, 10, 6, 0, 0, Math.PI * 2);
+  }
+  ctx.fill();
+  // Helmet
+  ctx.fillStyle = '#ff00ea';
+  ctx.beginPath();
+  ctx.arc(8, -2, 4, 0, Math.PI * 2);
+  ctx.fill();
+  // Visor
+  ctx.fillStyle = '#000';
+  ctx.beginPath();
+  ctx.arc(10, -2, 2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawMeters() {
+  // Takeoff window indicator
+  if (state === 'inrun') {
+    const bx = W - 180, by = 80, bw = 160, bh = 20;
+    ctx.fillStyle = 'rgba(0,0,0,0.7)';
+    ctx.fillRect(bx, by, bw, bh);
+    // Green zone near the end
+    ctx.fillStyle = 'rgba(0,255,136,0.3)';
+    ctx.fillRect(bx + bw * 0.8, by, bw * 0.2, bh);
+    // Needle
+    ctx.fillStyle = '#ffcc00';
+    ctx.fillRect(bx + takeoffWindow * bw - 2, by - 4, 4, bh + 8);
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 10px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('AVSATS-TIMING', bx + bw / 2, by - 8);
+  }
+  // Form meter
+  if (state === 'flight') {
+    const bx = W - 180, by = 80, bw = 160, bh = 20;
+    ctx.fillStyle = 'rgba(0,0,0,0.7)';
+    ctx.fillRect(bx, by, bw, bh);
+    ctx.fillStyle = 'rgba(0,255,136,0.3)';
+    ctx.fillRect(bx + bw * 0.8, by, bw * 0.2, bh);
+    ctx.fillStyle = '#ff00ea';
+    ctx.fillRect(bx + formMeter * bw - 2, by - 4, 4, bh + 8);
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 10px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('V-STILLING', bx + bw / 2, by - 8);
+    if (formPressed) {
+      ctx.fillStyle = '#00ff88';
+      ctx.fillText('LÅST!', bx + bw / 2, by + bh + 14);
+    }
+  }
+  // Landing window
+  if (state === 'landing') {
+    const bx = W - 180, by = 80, bw = 160, bh = 20;
+    ctx.fillStyle = 'rgba(0,0,0,0.7)';
+    ctx.fillRect(bx, by, bw, bh);
+    ctx.fillStyle = 'rgba(0,255,136,0.3)';
+    ctx.fillRect(bx + bw * 0.7, by, bw * 0.25, bh);
+    ctx.fillStyle = '#ff3344';
+    ctx.fillRect(bx + Math.min(1, landingWindow) * bw - 2, by - 4, 4, bh + 8);
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 10px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('LANDING-TIMING', bx + bw / 2, by - 8);
+  }
+}
+
+function drawLysgaardsTower() {
+  // Tower structure at top of hill
+  ctx.fillStyle = '#2a4258';
+  ctx.fillRect(inrunStart.x - 40, 20, 14, inrunStart.y - 20);
+  ctx.fillRect(inrunStart.x - 12, 20, 14, inrunStart.y - 20);
+  // Cross-bracing
+  ctx.strokeStyle = '#1a3248';
+  ctx.lineWidth = 1;
+  for (let y = 30; y < inrunStart.y; y += 20) {
+    ctx.beginPath();
+    ctx.moveTo(inrunStart.x - 40, y);
+    ctx.lineTo(inrunStart.x + 2, y + 10);
+    ctx.moveTo(inrunStart.x - 12, y);
+    ctx.lineTo(inrunStart.x - 26, y + 10);
+    ctx.stroke();
+  }
+  // Flag
+  ctx.fillStyle = '#cc1122';
+  ctx.fillRect(inrunStart.x - 45, 14, 12, 6);
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(inrunStart.x - 45, 14, 12, 2);
+  ctx.fillStyle = '#0033aa';
+  ctx.fillRect(inrunStart.x - 45, 16, 4, 2);
+  ctx.fillStyle = '#cc1122';
+  ctx.fillRect(inrunStart.x - 41, 16, 2, 2);
+}
+
+let lastT = 0;
+function loop(now) {
+  const dt = Math.min(50, now - lastT);
+  lastT = now;
+  drawSky();
+  drawLysgaardsTower();
+  drawHill();
+  if (state === 'inrun' || state === 'flight' || state === 'landing' || state === 'over') {
+    update(dt);
+    drawJumper();
+    drawMeters();
+  }
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

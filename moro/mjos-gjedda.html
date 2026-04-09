@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mjøs-Gjedda – Bli Mjøsas legendariske kjempegjedde | AI Innlandet</title>
+<meta name="description" content="Spill som Mjøsas legendariske kjempegjedde. Spis småfisk og ender, unngå fiskere og Skibladner. AI-sonar viser hvor byttet gjemmer seg.">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    background: linear-gradient(180deg, #001a33 0%, #003d66 100%);
+    color: #fff;
+    min-height: 100vh;
+  }
+  .top-bar {
+    background: rgba(0, 26, 51, 0.9);
+    padding: 14px 24px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    backdrop-filter: blur(10px);
+  }
+  .top-bar a { color: #00d4ff; text-decoration: none; font-size: 0.9em; }
+  .top-bar .brand { font-weight: 800; letter-spacing: 1px; }
+  .container { max-width: 900px; margin: 0 auto; padding: 24px; text-align: center; }
+  h1 {
+    font-size: clamp(1.8em, 4vw, 2.6em);
+    margin-bottom: 8px;
+    background: linear-gradient(90deg, #00d4ff, #7effa0);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 800;
+  }
+  .tagline { opacity: 0.85; margin-bottom: 20px; font-size: 1em; max-width: 680px; margin-left:auto; margin-right:auto; line-height: 1.6; }
+  #game-wrap {
+    position: relative;
+    max-width: 800px;
+    margin: 0 auto;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    border: 2px solid rgba(255,255,255,0.15);
+  }
+  canvas { display: block; width: 100%; touch-action: none; }
+  .hud {
+    position: absolute;
+    top: 12px; left: 12px; right: 12px;
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    pointer-events: none;
+    flex-wrap: wrap;
+  }
+  .hud-item {
+    background: rgba(0,0,0,0.7);
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 0.9em;
+    border: 1px solid rgba(0,212,255,0.3);
+  }
+  .overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,26,51,0.93);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 30px;
+    backdrop-filter: blur(6px);
+  }
+  .overlay.hidden { display: none; }
+  .overlay h2 {
+    font-size: 2em;
+    margin-bottom: 12px;
+    background: linear-gradient(90deg, #00d4ff, #7effa0);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .overlay p { opacity: 0.9; margin-bottom: 18px; max-width: 480px; line-height: 1.6; }
+  .btn {
+    background: linear-gradient(135deg, #00d4ff, #7effa0);
+    color: #001a33;
+    border: none;
+    padding: 14px 32px;
+    border-radius: 999px;
+    font-weight: 800;
+    font-size: 1em;
+    cursor: pointer;
+    box-shadow: 0 8px 24px rgba(0,212,255,0.3);
+  }
+  .btn:hover { transform: translateY(-2px); }
+  .footer-cta {
+    margin-top: 30px;
+    padding: 20px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  .footer-cta a { color: #00d4ff; font-weight: 700; }
+  .controls-hint {
+    margin-top: 14px;
+    opacity: 0.7;
+    font-size: 0.85em;
+  }
+</style>
+</head>
+<body>
+  <div class="top-bar">
+    <a href="../index.html" class="brand">← AI INNLANDET</a>
+    <a href="../index.html#moro">Flere spill</a>
+  </div>
+
+  <div class="container">
+    <h1>Mjøs-Gjedda</h1>
+    <p class="tagline">Du er Mjøsas legendariske kjempegjedde. Spis småfisk og ender for å vokse deg større – men hold deg unna fiskekrok og Skibladners propeller. Styr med mus, finger eller piltaster.</p>
+
+    <div id="game-wrap">
+      <canvas id="game" width="800" height="560"></canvas>
+
+      <div class="hud">
+        <div class="hud-item">Poeng: <span id="score">0</span></div>
+        <div class="hud-item">Lengde: <span id="length">40</span> cm</div>
+        <div class="hud-item">Rekord: <span id="best">0</span></div>
+      </div>
+
+      <div class="overlay" id="start">
+        <h2>Mjøsas monster våkner 🐟</h2>
+        <p>Spis 🐠 småfisk (+5), 🦆 andunger (+15) og 🪱 mark (+3). Unngå 🎣 fiskekrok og ⛴️ Skibladner. AI-sonar viser pilene mot nærmeste bytte.</p>
+        <button class="btn" onclick="startGame()">START JAKTEN</button>
+      </div>
+
+      <div class="overlay hidden" id="end">
+        <h2 id="end-title">Fanget! 🎣</h2>
+        <p id="end-msg"></p>
+        <button class="btn" onclick="startGame()">SPILL IGJEN</button>
+      </div>
+    </div>
+    <p class="controls-hint">🖱️ Mus/finger styrer retning · Piltaster også · Gjedda følger pekeren</p>
+
+    <div class="footer-cta">
+      <p>AI-sonaret er fiksjon her – men vi bygger faktisk smarte systemer som finner mønstre i data for bedrifter i Innlandet.<br>
+      <a href="../index.html#kontakt">Bestill AI-kartlegging →</a></p>
+    </div>
+  </div>
+
+<script>
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+
+const scoreEl = document.getElementById('score');
+const lengthEl = document.getElementById('length');
+const bestEl = document.getElementById('best');
+const startOv = document.getElementById('start');
+const endOv = document.getElementById('end');
+const endTitle = document.getElementById('end-title');
+const endMsg = document.getElementById('end-msg');
+
+let state = 'menu';
+let score = 0;
+let best = parseInt(localStorage.getItem('mjosGjeddaBest') || '0', 10);
+bestEl.textContent = best;
+
+let pike = { x: W/2, y: H/2, angle: 0, size: 40, speed: 2.8 };
+let target = { x: W/2, y: H/2 };
+let fish = [];
+let ducks = [];
+let worms = [];
+let hooks = [];
+let boats = [];
+let bubbles = [];
+let t = 0;
+let spawnTimer = 0;
+let hookTimer = 0;
+let boatTimer = 0;
+
+// Input
+canvas.addEventListener('mousemove', e => {
+  const r = canvas.getBoundingClientRect();
+  target.x = (e.clientX - r.left) * (W / r.width);
+  target.y = (e.clientY - r.top) * (H / r.height);
+});
+canvas.addEventListener('touchmove', e => {
+  e.preventDefault();
+  const r = canvas.getBoundingClientRect();
+  const t0 = e.touches[0];
+  target.x = (t0.clientX - r.left) * (W / r.width);
+  target.y = (t0.clientY - r.top) * (H / r.height);
+}, { passive: false });
+
+const keys = {};
+document.addEventListener('keydown', e => {
+  keys[e.key] = true;
+  if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)) e.preventDefault();
+});
+document.addEventListener('keyup', e => { keys[e.key] = false; });
+
+function resetGame() {
+  score = 0;
+  pike = { x: W/2, y: H/2, angle: 0, size: 40, speed: 2.8 };
+  target = { x: W/2, y: H/2 };
+  fish = []; ducks = []; worms = []; hooks = []; boats = []; bubbles = [];
+  spawnTimer = 0; hookTimer = 0; boatTimer = 0;
+  for (let i = 0; i < 6; i++) spawnFish();
+  for (let i = 0; i < 2; i++) spawnWorm();
+  updateHUD();
+}
+
+function startGame() {
+  resetGame();
+  state = 'play';
+  startOv.classList.add('hidden');
+  endOv.classList.add('hidden');
+}
+
+function gameOver(reason) {
+  state = 'over';
+  if (score > best) {
+    best = score;
+    localStorage.setItem('mjosGjeddaBest', best);
+  }
+  endTitle.textContent = reason;
+  endMsg.textContent = `Du ble ${pike.size | 0} cm lang og fikk ${score} poeng. Rekord: ${best}.`;
+  endOv.classList.remove('hidden');
+}
+
+function spawnFish() {
+  const side = Math.random() < 0.5 ? -20 : W + 20;
+  fish.push({
+    x: side,
+    y: 60 + Math.random() * (H - 120),
+    vx: (side < 0 ? 1 : -1) * (0.6 + Math.random() * 0.8),
+    vy: (Math.random() - 0.5) * 0.4,
+    wiggle: Math.random() * Math.PI * 2,
+    color: ['#c9a66b','#8c6d3f','#a67c52','#b88a4f'][Math.floor(Math.random() * 4)]
+  });
+}
+
+function spawnDuck() {
+  ducks.push({
+    x: Math.random() < 0.5 ? -30 : W + 30,
+    y: 30 + Math.random() * 40,
+    vx: (Math.random() - 0.5) * 0.8,
+    wiggle: 0
+  });
+}
+
+function spawnWorm() {
+  worms.push({
+    x: 40 + Math.random() * (W - 80),
+    y: 60 + Math.random() * (H - 120),
+    life: 400 + Math.random() * 300,
+    wiggle: Math.random() * Math.PI * 2
+  });
+}
+
+function spawnHook() {
+  hooks.push({
+    x: 60 + Math.random() * (W - 120),
+    y: -20,
+    targetY: 100 + Math.random() * (H - 200),
+    vy: 1.4,
+    stay: 0,
+    phase: 'down'
+  });
+}
+
+function spawnBoat() {
+  boats.push({
+    x: -80,
+    y: 12,
+    vx: 1.6 + Math.random() * 0.8
+  });
+}
+
+function update(dt) {
+  t += dt;
+
+  // Keyboard input
+  if (keys['ArrowLeft']) target.x -= 4;
+  if (keys['ArrowRight']) target.x += 4;
+  if (keys['ArrowUp']) target.y -= 4;
+  if (keys['ArrowDown']) target.y += 4;
+  target.x = Math.max(0, Math.min(W, target.x));
+  target.y = Math.max(40, Math.min(H, target.y));
+
+  // Move pike toward target
+  const dx = target.x - pike.x;
+  const dy = target.y - pike.y;
+  const dist = Math.hypot(dx, dy);
+  if (dist > 4) {
+    pike.angle = Math.atan2(dy, dx);
+    const speed = Math.min(dist * 0.08, pike.speed);
+    pike.x += Math.cos(pike.angle) * speed;
+    pike.y += Math.sin(pike.angle) * speed;
+  }
+  pike.x = Math.max(pike.size/2, Math.min(W - pike.size/2, pike.x));
+  pike.y = Math.max(40 + pike.size/4, Math.min(H - pike.size/4, pike.y));
+
+  // Bubbles
+  if (Math.random() < 0.15) {
+    bubbles.push({
+      x: Math.random() * W,
+      y: H + 10,
+      vy: -0.4 - Math.random() * 0.6,
+      r: 1 + Math.random() * 3
+    });
+  }
+  bubbles = bubbles.filter(b => b.y > -10);
+  for (const b of bubbles) b.y += b.vy;
+
+  // Fish
+  for (const f of fish) {
+    f.x += f.vx;
+    f.y += f.vy + Math.sin(t / 200 + f.wiggle) * 0.2;
+    f.wiggle += 0.05;
+  }
+  fish = fish.filter(f => f.x > -40 && f.x < W + 40);
+
+  // Ducks
+  for (const d of ducks) {
+    d.x += d.vx;
+    d.wiggle += 0.1;
+    d.y = 30 + Math.sin(d.wiggle) * 3 + (d.y - (30 + Math.sin(d.wiggle - 0.1) * 3));
+  }
+  ducks = ducks.filter(d => d.x > -60 && d.x < W + 60);
+
+  // Worms
+  for (const w of worms) { w.life -= dt / 16; w.wiggle += 0.1; }
+  worms = worms.filter(w => w.life > 0);
+
+  // Hooks
+  for (const h of hooks) {
+    if (h.phase === 'down') {
+      h.y += h.vy;
+      if (h.y >= h.targetY) { h.phase = 'wait'; h.stay = 120; }
+    } else if (h.phase === 'wait') {
+      h.stay -= dt / 16;
+      if (h.stay <= 0) h.phase = 'up';
+    } else {
+      h.y -= 1.6;
+    }
+  }
+  hooks = hooks.filter(h => h.y > -30);
+
+  // Boats
+  for (const b of boats) b.x += b.vx;
+  boats = boats.filter(b => b.x < W + 120);
+
+  // Spawning
+  spawnTimer += dt;
+  if (spawnTimer > 900) {
+    spawnTimer = 0;
+    if (fish.length < 10) spawnFish();
+    if (Math.random() < 0.3 && ducks.length < 3) spawnDuck();
+    if (Math.random() < 0.4 && worms.length < 4) spawnWorm();
+  }
+
+  hookTimer += dt;
+  const hookRate = Math.max(1800, 4500 - score * 10);
+  if (hookTimer > hookRate && hooks.length < 3) {
+    hookTimer = 0;
+    spawnHook();
+  }
+
+  boatTimer += dt;
+  if (boatTimer > 15000 && boats.length === 0) {
+    boatTimer = 0;
+    if (Math.random() < 0.5) spawnBoat();
+  }
+
+  // Collisions with fish
+  for (let i = fish.length - 1; i >= 0; i--) {
+    const f = fish[i];
+    if (Math.hypot(f.x - pike.x, f.y - pike.y) < pike.size * 0.5 + 8) {
+      fish.splice(i, 1);
+      score += 5;
+      pike.size = Math.min(100, pike.size + 0.8);
+    }
+  }
+  // Ducks
+  for (let i = ducks.length - 1; i >= 0; i--) {
+    const d = ducks[i];
+    if (Math.hypot(d.x - pike.x, d.y - pike.y) < pike.size * 0.5 + 14) {
+      if (pike.size >= 50) {
+        ducks.splice(i, 1);
+        score += 15;
+        pike.size = Math.min(100, pike.size + 2);
+      }
+    }
+  }
+  // Worms
+  for (let i = worms.length - 1; i >= 0; i--) {
+    const w = worms[i];
+    if (Math.hypot(w.x - pike.x, w.y - pike.y) < pike.size * 0.5 + 6) {
+      worms.splice(i, 1);
+      score += 3;
+      pike.size = Math.min(100, pike.size + 0.3);
+    }
+  }
+  // Hooks = death
+  for (const h of hooks) {
+    if (Math.hypot(h.x - pike.x, (h.y + 8) - pike.y) < pike.size * 0.5 + 6) {
+      return gameOver('Fanget! 🎣');
+    }
+  }
+  // Boats = death
+  for (const b of boats) {
+    if (pike.y < 40 && Math.abs(pike.x - (b.x + 40)) < 50) {
+      return gameOver('Skibladner kjørte over deg! ⛴️');
+    }
+  }
+
+  updateHUD();
+}
+
+function updateHUD() {
+  scoreEl.textContent = score;
+  lengthEl.textContent = pike.size | 0;
+  bestEl.textContent = best;
+}
+
+// ---------- DRAW ----------
+
+function drawWater() {
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, '#0a3a66');
+  g.addColorStop(0.3, '#04264a');
+  g.addColorStop(1, '#021a33');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, W, H);
+  // Surface shimmer
+  ctx.fillStyle = 'rgba(0, 212, 255, 0.1)';
+  ctx.fillRect(0, 0, W, 28);
+  for (let i = 0; i < W; i += 40) {
+    ctx.fillStyle = 'rgba(255,255,255,0.08)';
+    ctx.fillRect(i + Math.sin(t / 400 + i) * 4, 20, 20, 2);
+  }
+  // Light rays
+  for (let i = 0; i < 5; i++) {
+    const x = (i * 180 + Math.sin(t / 2000 + i) * 30) % W;
+    const grd = ctx.createLinearGradient(x, 0, x + 60, H);
+    grd.addColorStop(0, 'rgba(100,220,255,0.08)');
+    grd.addColorStop(1, 'rgba(100,220,255,0)');
+    ctx.fillStyle = grd;
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x + 40, 0);
+    ctx.lineTo(x + 120, H);
+    ctx.lineTo(x + 60, H);
+    ctx.closePath();
+    ctx.fill();
+  }
+  // Bubbles
+  for (const b of bubbles) {
+    ctx.fillStyle = 'rgba(200,230,255,0.3)';
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function drawPike() {
+  ctx.save();
+  ctx.translate(pike.x, pike.y);
+  ctx.rotate(pike.angle);
+  const s = pike.size;
+  // Body
+  const grd = ctx.createLinearGradient(0, -s/4, 0, s/4);
+  grd.addColorStop(0, '#2d5a3c');
+  grd.addColorStop(0.5, '#4a8c5c');
+  grd.addColorStop(1, '#1a3a28');
+  ctx.fillStyle = grd;
+  ctx.beginPath();
+  ctx.ellipse(0, 0, s/2, s/4, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // Spots
+  ctx.fillStyle = 'rgba(220,240,150,0.4)';
+  for (let i = -2; i <= 2; i++) {
+    ctx.beginPath();
+    ctx.arc(i * s/10, -s/12, 1.5, 0, Math.PI * 2);
+    ctx.arc(i * s/10 + s/20, s/12, 1.5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  // Tail
+  ctx.fillStyle = '#1a3a28';
+  ctx.beginPath();
+  const wag = Math.sin(t / 80) * 0.3;
+  ctx.moveTo(-s/2, 0);
+  ctx.lineTo(-s/2 - s/4, -s/5 + wag * s/8);
+  ctx.lineTo(-s/2 - s/5, 0);
+  ctx.lineTo(-s/2 - s/4, s/5 + wag * s/8);
+  ctx.closePath();
+  ctx.fill();
+  // Head/jaw
+  ctx.fillStyle = '#2d5a3c';
+  ctx.beginPath();
+  ctx.moveTo(s/2, -s/10);
+  ctx.lineTo(s/2 + s/6, -s/20);
+  ctx.lineTo(s/2 + s/6, s/20);
+  ctx.lineTo(s/2, s/10);
+  ctx.closePath();
+  ctx.fill();
+  // Teeth
+  ctx.fillStyle = '#fff';
+  for (let i = 0; i < 3; i++) {
+    ctx.beginPath();
+    ctx.moveTo(s/2 + 2 + i * 3, -s/20);
+    ctx.lineTo(s/2 + 3.5 + i * 3, s/40);
+    ctx.lineTo(s/2 + 5 + i * 3, -s/20);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(s/2 + 2 + i * 3, s/20);
+    ctx.lineTo(s/2 + 3.5 + i * 3, -s/40);
+    ctx.lineTo(s/2 + 5 + i * 3, s/20);
+    ctx.fill();
+  }
+  // Eye
+  ctx.fillStyle = '#fff';
+  ctx.beginPath();
+  ctx.arc(s/4, -s/8, s/20 + 1, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#000';
+  ctx.beginPath();
+  ctx.arc(s/4 + 1, -s/8, s/40 + 0.8, 0, Math.PI * 2);
+  ctx.fill();
+  // Fin
+  ctx.fillStyle = 'rgba(40,80,50,0.8)';
+  ctx.beginPath();
+  ctx.moveTo(-s/8, -s/4);
+  ctx.lineTo(0, -s/3);
+  ctx.lineTo(s/12, -s/4);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawFish(f) {
+  ctx.save();
+  ctx.translate(f.x, f.y);
+  ctx.scale(f.vx < 0 ? -1 : 1, 1);
+  ctx.fillStyle = f.color;
+  ctx.beginPath();
+  ctx.ellipse(0, 0, 10, 5, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(-10, 0);
+  ctx.lineTo(-15, -4);
+  ctx.lineTo(-15, 4);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = '#000';
+  ctx.beginPath();
+  ctx.arc(5, -1, 1.2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawDuck(d) {
+  ctx.save();
+  ctx.translate(d.x, d.y);
+  ctx.scale(d.vx < 0 ? -1 : 1, 1);
+  // Body
+  ctx.fillStyle = '#e8e8e8';
+  ctx.beginPath();
+  ctx.ellipse(0, 0, 14, 8, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // Head
+  ctx.fillStyle = '#2a5c3a';
+  ctx.beginPath();
+  ctx.arc(10, -4, 6, 0, Math.PI * 2);
+  ctx.fill();
+  // Beak
+  ctx.fillStyle = '#ffb84a';
+  ctx.beginPath();
+  ctx.moveTo(14, -4);
+  ctx.lineTo(20, -3);
+  ctx.lineTo(14, -1);
+  ctx.closePath();
+  ctx.fill();
+  // Eye
+  ctx.fillStyle = '#000';
+  ctx.beginPath();
+  ctx.arc(12, -5, 0.8, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawWorm(w) {
+  ctx.save();
+  ctx.translate(w.x, w.y);
+  ctx.strokeStyle = '#cc5577';
+  ctx.lineWidth = 3;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  for (let i = 0; i < 10; i++) {
+    const xx = i * 1.2 - 6;
+    const yy = Math.sin(w.wiggle + i * 0.6) * 2;
+    if (i === 0) ctx.moveTo(xx, yy); else ctx.lineTo(xx, yy);
+  }
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawHook(h) {
+  // Line
+  ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(h.x, 0);
+  ctx.lineTo(h.x, h.y);
+  ctx.stroke();
+  // Hook
+  ctx.strokeStyle = '#c0c0c0';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(h.x, h.y + 4, 5, Math.PI * 0.2, Math.PI * 1.4);
+  ctx.stroke();
+  // Bait
+  ctx.fillStyle = '#cc5577';
+  ctx.beginPath();
+  ctx.arc(h.x - 2, h.y + 2, 3, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawBoat(b) {
+  ctx.save();
+  ctx.translate(b.x, b.y);
+  // Hull
+  ctx.fillStyle = '#8b5a2b';
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(80, 0);
+  ctx.lineTo(72, 14);
+  ctx.lineTo(8, 14);
+  ctx.closePath();
+  ctx.fill();
+  // Superstructure
+  ctx.fillStyle = '#f0f0f0';
+  ctx.fillRect(20, -14, 40, 14);
+  // Chimney
+  ctx.fillStyle = '#111';
+  ctx.fillRect(38, -22, 6, 8);
+  // Smoke
+  ctx.fillStyle = 'rgba(180,180,180,0.6)';
+  ctx.beginPath();
+  ctx.arc(41, -26, 3, 0, Math.PI * 2);
+  ctx.arc(44, -30, 4, 0, Math.PI * 2);
+  ctx.fill();
+  // Propeller wake
+  ctx.fillStyle = 'rgba(255,255,255,0.4)';
+  ctx.fillRect(-20, 8, 20, 2);
+  ctx.restore();
+}
+
+function drawSonar() {
+  // Find nearest valuable target
+  let nearest = null;
+  let nd = Infinity;
+  const candidates = [...fish, ...ducks.filter(() => pike.size >= 50), ...worms];
+  for (const c of candidates) {
+    const d = Math.hypot(c.x - pike.x, c.y - pike.y);
+    if (d < nd) { nd = d; nearest = c; }
+  }
+  if (!nearest) return;
+  // Arrow to target
+  const ang = Math.atan2(nearest.y - pike.y, nearest.x - pike.x);
+  const r = pike.size * 0.7 + 10;
+  const ax = pike.x + Math.cos(ang) * r;
+  const ay = pike.y + Math.sin(ang) * r;
+  ctx.save();
+  ctx.translate(ax, ay);
+  ctx.rotate(ang);
+  ctx.fillStyle = `rgba(0,212,255,${0.5 + Math.sin(t/200)*0.3})`;
+  ctx.beginPath();
+  ctx.moveTo(8, 0);
+  ctx.lineTo(0, -5);
+  ctx.lineTo(0, 5);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+  // Sonar pulse
+  const pulse = (t / 8) % 120;
+  ctx.strokeStyle = `rgba(0,212,255,${0.4 - pulse/300})`;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.arc(pike.x, pike.y, pulse, 0, Math.PI * 2);
+  ctx.stroke();
+}
+
+let lastT = 0;
+function loop(now) {
+  const dt = Math.min(50, now - lastT);
+  lastT = now;
+  drawWater();
+  if (state === 'play') {
+    update(dt);
+    for (const f of fish) drawFish(f);
+    for (const d of ducks) drawDuck(d);
+    for (const w of worms) drawWorm(w);
+    for (const b of boats) drawBoat(b);
+    drawSonar();
+    for (const h of hooks) drawHook(h);
+    drawPike();
+  } else {
+    drawPike();
+  }
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
