@@ -7,7 +7,7 @@
 
 ## 1. Om prosjektet
 
-**AI Innlandet** er en nettside som hjelper bedrifter i Innlandet med å forstå, velge og ta i bruk kunstig intelligens. Siden presenterer tjenester, AI-nyheter og har et lead-skjema for å bestille gratis AI-kartlegging.
+**AI Innlandet** er en nettside som hjelper bedrifter i Innlandet med å forstå, velge og ta i bruk kunstig intelligens. Siden presenterer tjenester, AI-nyheter og har et lead-skjema for å bestille AI-kartlegging.
 
 ---
 
