@@ -344,7 +344,8 @@ const WATER_LEVEL = 480;   // y-posisjon for vannet
 const TOWER_X = 200;       // x-posisjon for tårnet
 
 // Game state
-let state = 'idle'; // idle | climbing | falling | splash | done
+let state = 'idle'; // idle | countdown | falling | splash | done
+let countdown = 0;
 let player = {
   x: TOWER_X,
   y: TOWER_TOP - 20,
@@ -623,23 +624,36 @@ function drawSplash() {
 function update() {
   gameTime++;
 
+  if (state === 'countdown') {
+    countdown -= 1/60; // anta 60fps
+    if (countdown <= 0) {
+      state = 'falling';
+      player.vy = -1; // lett oppsprang
+    }
+  }
+
   if (state === 'falling') {
-    // Gravitasjon
-    player.vy += 0.35;
+    // Mye lavere gravitasjon – slow-motion stup
+    player.vy += 0.12;
+    // Maks fallhastighet (begrenser hastigheten)
+    if (player.vy > 5) player.vy = 5;
+
     player.y += player.vy;
     player.x += player.vx;
 
-    // Rotasjon
+    // Rotasjon – raskere input, bedre kontroll
     if (keys['ArrowLeft'] || keys['a']) {
-      player.rotation -= 0.12;
-      player.totalRotation += 0.12;
+      player.rotation -= 0.01;
     }
     if (keys['ArrowRight'] || keys['d']) {
-      player.rotation += 0.12;
-      player.totalRotation += 0.12;
+      player.rotation += 0.01;
     }
+    // Begrens rotasjonshastighet
+    if (player.rotation > 0.15) player.rotation = 0.15;
+    if (player.rotation < -0.15) player.rotation = -0.15;
+
     player.angle += player.rotation;
-    player.rotation *= 0.98;
+    player.totalRotation += Math.abs(player.rotation);
 
     // Landing
     if (player.y >= WATER_LEVEL - 10) {
@@ -655,17 +669,23 @@ function splash() {
   const rotations = Math.floor(player.totalRotation / (Math.PI * 2));
   const landingAngle = ((player.angle % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
 
-  // Ideel landing er hode-først (vertikal)
-  // 0 / PI/2 / PI / 3PI/2 = horisontalt, PI = hodestups (beste)
-  let landingScore = 0;
+  // Ideel landing: loddrett (hode ned eller føtter ned)
+  // 0° = hode opp, 180° = hode ned — begge er "loddrett"
   const angleDeg = (landingAngle * 180 / Math.PI) % 360;
-  // Beste: 180° (hodestups)
-  const diff = Math.min(Math.abs(angleDeg - 180), Math.abs(angleDeg - 540), Math.abs(angleDeg + 180));
-  if (diff < 15) landingScore = 100;        // Perfekt hodestups
-  else if (diff < 30) landingScore = 75;
-  else if (diff < 60) landingScore = 50;
-  else if (diff < 90) landingScore = 25;
-  else landingScore = 10;                    // Magesmell
+  // Avstand til nærmeste loddrette posisjon (0° eller 180°)
+  const diff = Math.min(
+    Math.abs(angleDeg),
+    Math.abs(angleDeg - 180),
+    Math.abs(angleDeg - 360)
+  );
+  // 90° = helt horisontalt (magesmell)
+  let landingScore = 0;
+  if (diff < 8) landingScore = 100;         // Perfekt loddrett
+  else if (diff < 20) landingScore = 80;
+  else if (diff < 35) landingScore = 60;
+  else if (diff < 55) landingScore = 35;
+  else if (diff < 75) landingScore = 15;
+  else landingScore = 5;                     // Magesmell
 
   // Rotasjons-bonus
   const rotationBonus = rotations * 50;
@@ -751,6 +771,42 @@ function render() {
   if (state !== 'splash' && state !== 'done') drawPlayer();
   drawSplash();
 
+  // Countdown
+  if (state === 'countdown') {
+    const num = Math.ceil(countdown);
+    const progress = countdown - Math.floor(countdown);
+    const scale = 1 + (1 - progress) * 0.4;
+    const alpha = progress;
+
+    ctx.save();
+    ctx.translate(W/2, H/2);
+    ctx.scale(scale, scale);
+
+    // Bakgrunn
+    ctx.fillStyle = `rgba(0, 0, 0, ${0.4 * alpha})`;
+    ctx.beginPath();
+    ctx.arc(0, 0, 80, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Tall
+    ctx.fillStyle = `rgba(255, 215, 0, ${alpha})`;
+    ctx.strokeStyle = `rgba(255, 255, 255, ${alpha})`;
+    ctx.lineWidth = 4;
+    ctx.font = 'bold 120px -apple-system, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const text = num > 0 ? num.toString() : 'STUP!';
+    ctx.strokeText(text, 0, 0);
+    ctx.fillText(text, 0, 0);
+    ctx.restore();
+
+    // "Gjør deg klar" tekst
+    ctx.fillStyle = 'rgba(255,255,255,0.9)';
+    ctx.font = 'bold 16px -apple-system, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Bruk ← → for å rotere i lufta', W/2, H/2 + 100);
+  }
+
   // Oppdater HUD altitude
   if (state === 'falling') {
     const altitude = Math.max(0, ((WATER_LEVEL - player.y) / (WATER_LEVEL - TOWER_TOP)) * 22);
@@ -766,12 +822,13 @@ function loop() {
 }
 
 function startGame() {
-  state = 'falling';
+  state = 'countdown';
+  countdown = 3;
   player = {
     x: TOWER_X,
     y: TOWER_TOP - 20,
-    vx: (Math.random() - 0.5) * 0.8,
-    vy: -2,
+    vx: 0,
+    vy: 0,
     angle: 0,
     rotation: 0,
     totalRotation: 0
