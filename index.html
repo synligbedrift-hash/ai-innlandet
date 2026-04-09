@@ -775,7 +775,7 @@
         </div>
       </div>
 
-      <form name="lead" method="POST" action="/takk.html" data-netlify="true" netlify-honeypot="bot-field">
+      <form name="lead" id="leadForm" method="POST" data-netlify="true" netlify-honeypot="bot-field" onsubmit="return submitLead(event)">
         <input type="hidden" name="form-name" value="lead">
         <p style="display:none;"><label>Ikke fyll ut: <input name="bot-field"></label></p>
         <div class="field">
@@ -798,9 +798,38 @@
           <label for="melding">Hva ønsker dere å oppnå med AI? (valgfritt)</label>
           <textarea id="melding" name="melding" placeholder="Fortell kort om bedriften og hvilke oppgaver som tar mye tid i dag..."></textarea>
         </div>
-        <button type="submit">Bestill gratis kartlegging →</button>
-        <p class="form-note">Vi svarer innen 24 timer på hverdager.</p>
+        <button type="submit" id="leadBtn">Bestill gratis kartlegging →</button>
+        <p class="form-note" id="leadNote">Vi svarer innen 24 timer på hverdager.</p>
       </form>
+
+      <script>
+      function submitLead(e) {
+        e.preventDefault();
+        const form = document.getElementById('leadForm');
+        const btn = document.getElementById('leadBtn');
+        const note = document.getElementById('leadNote');
+        const data = new FormData(form);
+        btn.disabled = true;
+        btn.textContent = 'Sender...';
+        fetch('/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams(data).toString()
+        })
+        .then(() => {
+          btn.textContent = '✓ Takk! Vi tar kontakt snart';
+          btn.style.background = 'linear-gradient(90deg, #2ecc71, #27ae60)';
+          note.textContent = 'På grunn av stor pågang er du satt på ventelisten – vi tar kontakt så snart vi kan.';
+          form.reset();
+        })
+        .catch(() => {
+          btn.disabled = false;
+          btn.textContent = 'Prøv igjen';
+          note.textContent = 'Noe gikk galt. Send oss heller en e-post: roger@synligbedrift.no';
+        });
+        return false;
+      }
+      </script>
     </div>
   </div>
 </section>
