@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Takk! – AI Innlandet</title>
+<meta name="description" content="Takk for forespørselen. Du er satt på ventelisten – vi tar kontakt så snart vi kan.">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+    color: #fff;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  body::before {
+    content: "";
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(circle at 20% 30%, rgba(0, 212, 255, 0.18), transparent 50%),
+      radial-gradient(circle at 80% 70%, rgba(255, 0, 234, 0.14), transparent 50%);
+  }
+  .container {
+    position: relative;
+    max-width: 640px;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 24px;
+    padding: 60px 40px;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.4);
+  }
+  .check-icon {
+    width: 90px;
+    height: 90px;
+    margin: 0 auto 24px;
+    background: linear-gradient(135deg, #00d4ff, #ff00ea);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3em;
+    box-shadow: 0 15px 40px rgba(0, 212, 255, 0.4);
+    animation: pop 0.6s ease-out;
+  }
+  @keyframes pop {
+    0% { transform: scale(0); opacity: 0; }
+    80% { transform: scale(1.1); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  h1 {
+    font-size: 2.4em;
+    margin-bottom: 20px;
+    background: linear-gradient(90deg, #00d4ff, #ff00ea);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 800;
+    line-height: 1.2;
+  }
+  .lead-text {
+    font-size: 1.15em;
+    line-height: 1.7;
+    margin-bottom: 16px;
+    opacity: 0.95;
+  }
+  .highlight {
+    background: rgba(0, 212, 255, 0.15);
+    border: 1px solid rgba(0, 212, 255, 0.4);
+    border-radius: 16px;
+    padding: 24px;
+    margin: 32px 0;
+    text-align: left;
+  }
+  .highlight strong { color: #00d4ff; display: block; margin-bottom: 8px; }
+  .highlight p { opacity: 0.9; line-height: 1.6; }
+  .meta {
+    font-size: 0.95em;
+    opacity: 0.75;
+    margin: 24px 0;
+    line-height: 1.7;
+  }
+  .btns {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 32px;
+  }
+  .btn {
+    display: inline-block;
+    padding: 14px 28px;
+    font-size: 1em;
+    font-weight: 700;
+    text-decoration: none;
+    border-radius: 50px;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .btn-primary {
+    background: linear-gradient(90deg, #00d4ff, #ff00ea);
+    color: #fff;
+    box-shadow: 0 10px 30px rgba(0, 212, 255, 0.3);
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 15px 40px rgba(0, 212, 255, 0.5); }
+  .btn-secondary {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+  .btn-secondary:hover { background: rgba(255, 255, 255, 0.15); }
+  .footer-note {
+    margin-top: 32px;
+    font-size: 0.85em;
+    opacity: 0.5;
+  }
+  .footer-note a { color: #00d4ff; text-decoration: none; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="check-icon">✓</div>
+  <h1>Takk for forespørselen!</h1>
+  <p class="lead-text">Vi har mottatt din bestilling av gratis AI-kartlegging.</p>
+
+  <div class="highlight">
+    <strong>🎯 Du er satt på ventelisten</strong>
+    <p>På grunn av stor pågang jobber vi oss gjennom forespørsler fortløpende. Vi tar kontakt med deg så snart vi har kapasitet – vi lover å ikke la deg vente unødvendig lenge!</p>
+  </div>
+
+  <p class="meta">I mellomtiden kan du gjerne utforske hva vi jobber med, eller prøve noe av det morsomme vi har laget for Innlandet.</p>
+
+  <div class="btns">
+    <a href="index.html" class="btn btn-primary">← Tilbake til forsiden</a>
+    <a href="moro/skibladner.html" class="btn btn-secondary">⛴️ Spill Skibladner 2026</a>
+  </div>
+
+  <p class="footer-note">
+    Har du spørsmål i mellomtiden? Send en e-post til <a href="mailto:roger@synligbedrift.no">roger@synligbedrift.no</a>
+  </p>
+</div>
+</body>
+</html>
