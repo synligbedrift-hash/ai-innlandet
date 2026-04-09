@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stup fra Stupetårnet – Hamars dyreste hopp | AI Innlandet</title>
+<meta name="description" content="Stup fra Hamars famøse stupetårn – kjent for å sprekke alle budsjetter. Få poeng for stil, landing og budsjettbesparelse!">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    background: linear-gradient(180deg, #0a1628 0%, #1a3a5c 100%);
+    color: #fff;
+    min-height: 100vh;
+  }
+  .top-bar {
+    background: rgba(10, 22, 40, 0.9);
+    padding: 14px 24px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    backdrop-filter: blur(10px);
+  }
+  .top-bar a { color: #00d4ff; text-decoration: none; font-size: 0.9em; }
+  .top-bar .brand { font-weight: 800; letter-spacing: 1px; }
+  .container { max-width: 900px; margin: 0 auto; padding: 24px; text-align: center; }
+  h1 {
+    font-size: clamp(1.8em, 4vw, 2.6em);
+    margin-bottom: 8px;
+    background: linear-gradient(90deg, #00d4ff, #ff00ea);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 800;
+  }
+  .tagline { opacity: 0.85; margin-bottom: 20px; font-size: 1em; max-width: 680px; margin-left:auto; margin-right:auto; line-height: 1.6; }
+
+  #game-wrap {
+    position: relative;
+    max-width: 800px;
+    margin: 0 auto;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    border: 2px solid rgba(255,255,255,0.15);
+  }
+  canvas { display: block; width: 100%; }
+
+  .hud {
+    position: absolute;
+    top: 12px; left: 12px; right: 12px;
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    pointer-events: none;
+    flex-wrap: wrap;
+  }
+  .hud-item {
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(6px);
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-size: 0.85em;
+    border: 1px solid rgba(255,255,255,0.2);
+  }
+  .hud-item strong { color: #00d4ff; }
+
+  .overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(10, 22, 40, 0.93);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    padding: 24px;
+    text-align: center;
+    z-index: 10;
+  }
+  .overlay.hidden { display: none; }
+  .overlay h2 {
+    font-size: 2em;
+    margin-bottom: 12px;
+    background: linear-gradient(90deg, #00d4ff, #ff00ea);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .overlay p { max-width: 560px; margin-bottom: 14px; opacity: 0.9; line-height: 1.6; }
+  .score-display {
+    font-size: 3em;
+    font-weight: 800;
+    color: #ffd700;
+    margin: 12px 0;
+  }
+  .score-breakdown {
+    background: rgba(255,255,255,0.06);
+    border-radius: 12px;
+    padding: 16px;
+    margin: 12px 0;
+    text-align: left;
+    max-width: 360px;
+    font-size: 0.9em;
+  }
+  .score-breakdown div { display: flex; justify-content: space-between; padding: 4px 0; }
+  .overlay button {
+    padding: 14px 30px;
+    font-size: 1em;
+    font-weight: 700;
+    background: linear-gradient(90deg, #00d4ff, #ff00ea);
+    color: #fff;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    margin: 6px;
+    transition: transform 0.2s;
+  }
+  .overlay button:hover { transform: translateY(-2px); }
+  .overlay button.secondary {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.3);
+  }
+  .info-box {
+    background: rgba(255,215,0,0.1);
+    border: 1px solid rgba(255,215,0,0.3);
+    padding: 14px;
+    border-radius: 10px;
+    font-size: 0.85em;
+    margin: 12px 0;
+    max-width: 440px;
+  }
+  .controls-info {
+    margin-top: 14px;
+    padding: 14px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 10px;
+    font-size: 0.85em;
+    opacity: 0.85;
+    max-width: 420px;
+  }
+  .controls-info kbd {
+    display: inline-block;
+    background: rgba(255,255,255,0.15);
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-family: monospace;
+    margin: 0 2px;
+    border: 1px solid rgba(255,255,255,0.2);
+  }
+
+  .mobile-controls {
+    display: none;
+    margin-top: 16px;
+    gap: 12px;
+    justify-content: center;
+  }
+  .mobile-btn {
+    padding: 18px 30px;
+    background: rgba(0,0,0,0.7);
+    border: 2px solid rgba(255,255,255,0.3);
+    border-radius: 50px;
+    color: #fff;
+    font-size: 1.1em;
+    cursor: pointer;
+    user-select: none;
+    touch-action: manipulation;
+    font-weight: 700;
+  }
+  .mobile-btn:active { background: #00d4ff; }
+  @media (hover: none) and (pointer: coarse) {
+    .mobile-controls { display: flex; }
+  }
+
+  .fact-section {
+    max-width: 800px;
+    margin: 32px auto;
+    background: rgba(255,215,0,0.08);
+    border-radius: 16px;
+    padding: 24px;
+    border: 1px solid rgba(255,215,0,0.2);
+  }
+  .fact-section h3 { color: #ffd700; margin-bottom: 14px; }
+  .fact-section p { opacity: 0.9; line-height: 1.7; margin-bottom: 10px; }
+  .fact-section ul { margin: 12px 0 12px 20px; opacity: 0.9; line-height: 1.7; }
+
+  .highscore-section {
+    max-width: 800px;
+    margin: 32px auto;
+    background: rgba(255,255,255,0.05);
+    border-radius: 16px;
+    padding: 24px;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  .highscore-section h3 { margin-bottom: 16px; color: #00d4ff; }
+  .highscore-list { list-style: none; }
+  .highscore-list li {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  .highscore-list li:first-child { font-weight: 700; color: #ffd700; }
+  .highscore-list .rank { opacity: 0.6; width: 40px; }
+
+  .cta-section {
+    max-width: 800px;
+    margin: 40px auto;
+    background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(255, 0, 234, 0.1));
+    border: 1px solid rgba(0, 212, 255, 0.3);
+    padding: 32px;
+    border-radius: 20px;
+    text-align: center;
+  }
+  .cta-section h3 {
+    font-size: 1.4em;
+    margin-bottom: 12px;
+    background: linear-gradient(90deg, #00d4ff, #ff00ea);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .cta-section p { opacity: 0.9; margin-bottom: 20px; line-height: 1.6; }
+  .cta-section a {
+    display: inline-block;
+    padding: 14px 32px;
+    background: linear-gradient(90deg, #00d4ff, #ff00ea);
+    color: #fff;
+    text-decoration: none;
+    border-radius: 50px;
+    font-weight: 700;
+    transition: transform 0.2s;
+  }
+  .cta-section a:hover { transform: translateY(-2px); }
+
+  footer {
+    text-align: center;
+    padding: 24px;
+    opacity: 0.5;
+    font-size: 0.85em;
+  }
+  footer a { color: #00d4ff; }
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <div class="brand">⚡ AI INNLANDET</div>
+  <a href="../index.html">← Tilbake til hovedsiden</a>
+</div>
+
+<div class="container">
+  <h1>🤿 Stup fra Stupetårnet</h1>
+  <p class="tagline">Hamars famøse stupetårn – symbolet på et offentlig prosjekt som sprakk alle budsjetter. Nå kan du endelig få igjen pengene ved å stupe med stil! Timer dine rotasjoner og land perfekt.</p>
+
+  <div id="game-wrap">
+    <canvas id="game" width="800" height="600"></canvas>
+
+    <div class="hud">
+      <div class="hud-item">🏆 <strong id="best">0</strong></div>
+      <div class="hud-item">💫 <strong id="rotations">0</strong></div>
+      <div class="hud-item">📏 <strong id="altitude">0m</strong></div>
+      <div class="hud-item">⭐ <strong id="score">0</strong></div>
+    </div>
+
+    <div class="overlay" id="start-overlay">
+      <h2>🤿 Klar til å stupe?</h2>
+      <p>Du står på toppen av Hamars beryktede stupetårn – 22 meter over Mjøsa og 60+ millioner kroner over budsjett. Nå er det din tur til å gjøre det verdt pengene!</p>
+      <div class="info-box">
+        <strong>💰 Budsjett-fun-fact:</strong><br>
+        Opprinnelig pris: ~20 mill. Faktisk pris: over 80 mill. Hvert stup med stil gir deg <strong>budsjettbesparelse</strong> som bonus-poeng!
+      </div>
+      <div class="controls-info">
+        <strong>Kontroller:</strong><br>
+        <kbd>Space</kbd> eller <kbd>↑</kbd> for å hoppe<br>
+        Hold <kbd>←</kbd> eller <kbd>→</kbd> for å rotere i lufta<br>
+        Slipp knappene før landing for stilpoeng!
+      </div>
+      <button onclick="startGame()">🚀 Start å stupe</button>
+    </div>
+
+    <div class="overlay hidden" id="end-overlay">
+      <h2 id="end-title">Landing!</h2>
+      <p id="end-message"></p>
+      <div class="score-breakdown" id="breakdown"></div>
+      <div class="score-display" id="final-score">0</div>
+      <div>
+        <button onclick="saveAndRestart()">🔄 Stup igjen</button>
+        <button class="secondary" onclick="shareScore()">📤 Del</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="mobile-controls">
+    <button class="mobile-btn" id="btn-left">↺ Rotér</button>
+    <button class="mobile-btn" id="btn-jump">HOPP!</button>
+    <button class="mobile-btn" id="btn-right">Rotér ↻</button>
+  </div>
+
+  <div class="fact-section">
+    <h3>📜 Stupetårnet – Hamars dyreste bad</h3>
+    <p>Stupetårnet på Koigen i Hamar er et beryktet symbol på offentlige prosjekter som tar av. Det har blitt et fast inventar i norsk prosjektstyring-humor:</p>
+    <ul>
+      <li><strong>Opprinnelig prislapp:</strong> Beregnet til ca. 20 millioner kroner</li>
+      <li><strong>Endelig prislapp:</strong> Over 80 millioner kroner</li>
+      <li><strong>Forsinkelse:</strong> Åpning flere år etter planlagt</li>
+      <li><strong>Tilbakelegging:</strong> Symbol på hvor galt det kan gå uten god styring</li>
+      <li><strong>Men:</strong> Mange Hamars-barn har fått seg et gratis stup siden!</li>
+    </ul>
+    <p><strong>Morale:</strong> Gode verktøy (som AI!) kan hjelpe bedrifter å unngå å "gjøre et Stupetårn" – altså gå på en budsjettsprekk. Mer om det nederst 👇</p>
+  </div>
+
+  <div class="highscore-section">
+    <h3>🏆 Topplista – Innlandets beste stupere</h3>
+    <ol class="highscore-list" id="highscore-list">
+      <li><span class="rank">—</span><span>Ingen poeng ennå – bli den første!</span><span></span></li>
+    </ol>
+  </div>
+
+  <div class="cta-section">
+    <h3>💡 Unngå ditt eget Stupetårn</h3>
+    <p>AI kan hjelpe bedriften din å holde budsjett, kontrollere prosjekter og ta smartere beslutninger – før regningen går i taket. <strong>Det er akkurat sånt vi jobber med i Innlandet.</strong></p>
+    <a href="../index.html#kontakt">Bestill gratis AI-kartlegging →</a>
+  </div>
+</div>
+
+<footer>
+  <p>Laget av <a href="../index.html">AI Innlandet</a> · Et lite stykke Innlandet-humor</p>
+</footer>
+
+<script>
+// =====================================================
+// STUP FRA STUPETÅRNET - Hamar
+// =====================================================
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const W = canvas.width;
+const H = canvas.height;
+
+// Tårnet er 22m høyt ≈ 400 px i spillet
+const TOWER_TOP = 80;      // y-posisjon for toppen
+const WATER_LEVEL = 480;   // y-posisjon for vannet
+const TOWER_X = 200;       // x-posisjon for tårnet
+
+// Game state
+let state = 'idle'; // idle | climbing | falling | splash | done
+let player = {
+  x: TOWER_X,
+  y: TOWER_TOP - 20,
+  vx: 0,
+  vy: 0,
+  angle: 0,
+  rotation: 0,
+  totalRotation: 0
+};
+let bestScore = parseInt(localStorage.getItem('stupetaarn_best') || '0');
+let currentScore = 0;
+let gameTime = 0;
+let keys = {};
+let splashParticles = [];
+let currentStats = {};
+let birds = [];
+
+// Init birds
+for (let i = 0; i < 4; i++) {
+  birds.push({
+    x: Math.random() * W,
+    y: 100 + Math.random() * 100,
+    vx: 0.5 + Math.random() * 0.5,
+    wing: Math.random() * Math.PI * 2
+  });
+}
+
+// =====================================================
+// TEGNING
+// =====================================================
+function drawBackground() {
+  // Himmel
+  const sky = ctx.createLinearGradient(0, 0, 0, WATER_LEVEL);
+  sky.addColorStop(0, '#6bb6ff');
+  sky.addColorStop(0.6, '#a8d5f0');
+  sky.addColorStop(1, '#d4e9f5');
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, W, WATER_LEVEL);
+
+  // Fjerne fjell
+  ctx.fillStyle = '#5a7a8a';
+  ctx.beginPath();
+  ctx.moveTo(0, 300);
+  ctx.lineTo(100, 250);
+  ctx.lineTo(200, 280);
+  ctx.lineTo(320, 240);
+  ctx.lineTo(450, 270);
+  ctx.lineTo(600, 230);
+  ctx.lineTo(800, 260);
+  ctx.lineTo(800, 340);
+  ctx.lineTo(0, 340);
+  ctx.closePath();
+  ctx.fill();
+
+  // Nærmere fjell
+  ctx.fillStyle = '#3a5a6a';
+  ctx.beginPath();
+  ctx.moveTo(0, 360);
+  ctx.lineTo(120, 310);
+  ctx.lineTo(280, 340);
+  ctx.lineTo(420, 305);
+  ctx.lineTo(580, 330);
+  ctx.lineTo(720, 300);
+  ctx.lineTo(800, 320);
+  ctx.lineTo(800, 400);
+  ctx.lineTo(0, 400);
+  ctx.closePath();
+  ctx.fill();
+
+  // Hamar by i bakgrunnen (enkle bygninger)
+  ctx.fillStyle = '#2d4a5a';
+  for (let i = 0; i < 12; i++) {
+    const x = 350 + i * 35;
+    const h = 30 + ((i * 17) % 25);
+    ctx.fillRect(x, 400 - h, 25, h);
+    // Vinduer
+    ctx.fillStyle = '#ffeb3b';
+    if (i % 2 === 0) ctx.fillRect(x + 4, 405 - h, 3, 3);
+    ctx.fillStyle = '#2d4a5a';
+  }
+
+  // Hamar-domen ruin (den berømte)
+  ctx.fillStyle = '#5a5a5a';
+  ctx.fillRect(480, 370, 40, 30);
+  // Glasshetten
+  ctx.fillStyle = 'rgba(173, 216, 230, 0.5)';
+  ctx.beginPath();
+  ctx.moveTo(480, 370);
+  ctx.quadraticCurveTo(500, 340, 520, 370);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = '#888';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  // Fugler
+  birds.forEach(b => {
+    b.x += b.vx;
+    b.wing += 0.15;
+    if (b.x > W + 20) b.x = -20;
+    ctx.strokeStyle = '#333';
+    ctx.lineWidth = 2;
+    const wingY = Math.sin(b.wing) * 4;
+    ctx.beginPath();
+    ctx.moveTo(b.x - 8, b.y + wingY);
+    ctx.quadraticCurveTo(b.x - 4, b.y - 2, b.x, b.y);
+    ctx.quadraticCurveTo(b.x + 4, b.y - 2, b.x + 8, b.y + wingY);
+    ctx.stroke();
+  });
+
+  // Vannet (Mjøsa)
+  const water = ctx.createLinearGradient(0, WATER_LEVEL, 0, H);
+  water.addColorStop(0, '#4a90bc');
+  water.addColorStop(0.5, '#2d6a8e');
+  water.addColorStop(1, '#1a4a6c');
+  ctx.fillStyle = water;
+  ctx.fillRect(0, WATER_LEVEL, W, H - WATER_LEVEL);
+
+  // Bølger
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i < 4; i++) {
+    const y = WATER_LEVEL + 10 + i * 25;
+    ctx.beginPath();
+    for (let x = 0; x < W; x += 8) {
+      const yOff = Math.sin((x + gameTime * 0.8 + i * 20) * 0.04) * 2;
+      if (x === 0) ctx.moveTo(x, y + yOff);
+      else ctx.lineTo(x, y + yOff);
+    }
+    ctx.stroke();
+  }
+}
+
+function drawTower() {
+  // Betong-pillar (tykk, mot himmelen)
+  ctx.fillStyle = '#c8c0b0';
+  ctx.fillRect(TOWER_X - 25, TOWER_TOP, 50, WATER_LEVEL - TOWER_TOP + 20);
+
+  // Skygger/linjer
+  ctx.fillStyle = '#a89f8a';
+  ctx.fillRect(TOWER_X - 25, TOWER_TOP, 8, WATER_LEVEL - TOWER_TOP + 20);
+  ctx.fillStyle = '#b8ae95';
+  ctx.fillRect(TOWER_X + 15, TOWER_TOP, 10, WATER_LEVEL - TOWER_TOP + 20);
+
+  // "Sprekker" (moro-detalj – symbolsk for budsjett-sprekken)
+  ctx.strokeStyle = 'rgba(0,0,0,0.2)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(TOWER_X - 15, 200);
+  ctx.lineTo(TOWER_X - 10, 240);
+  ctx.lineTo(TOWER_X - 15, 280);
+  ctx.lineTo(TOWER_X - 8, 320);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(TOWER_X + 10, 180);
+  ctx.lineTo(TOWER_X + 5, 220);
+  ctx.lineTo(TOWER_X + 12, 260);
+  ctx.stroke();
+
+  // Toppen (stupe-plattform)
+  ctx.fillStyle = '#e8e0d0';
+  ctx.fillRect(TOWER_X - 40, TOWER_TOP - 10, 80, 15);
+  ctx.fillStyle = '#c8c0b0';
+  ctx.fillRect(TOWER_X - 40, TOWER_TOP + 5, 80, 3);
+
+  // Rekkverk (bare bakside for 3D-effekt)
+  ctx.strokeStyle = '#444';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(TOWER_X - 40, TOWER_TOP - 10);
+  ctx.lineTo(TOWER_X - 40, TOWER_TOP - 30);
+  ctx.lineTo(TOWER_X + 40, TOWER_TOP - 30);
+  ctx.lineTo(TOWER_X + 40, TOWER_TOP - 10);
+  ctx.stroke();
+  // Stolper
+  ctx.beginPath();
+  ctx.moveTo(TOWER_X - 20, TOWER_TOP - 10);
+  ctx.lineTo(TOWER_X - 20, TOWER_TOP - 30);
+  ctx.moveTo(TOWER_X, TOWER_TOP - 10);
+  ctx.lineTo(TOWER_X, TOWER_TOP - 30);
+  ctx.moveTo(TOWER_X + 20, TOWER_TOP - 10);
+  ctx.lineTo(TOWER_X + 20, TOWER_TOP - 30);
+  ctx.stroke();
+
+  // Høydeskala / tekst
+  ctx.fillStyle = 'rgba(0,0,0,0.5)';
+  ctx.font = 'bold 11px sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('22 m', TOWER_X + 32, TOWER_TOP + 20);
+  ctx.fillText('80+ mill', TOWER_X + 32, TOWER_TOP + 35);
+
+  // "Sprekk"-etikett
+  ctx.fillStyle = 'rgba(200,0,0,0.6)';
+  ctx.font = 'bold 10px sans-serif';
+  ctx.fillText('BUDSJETT-', TOWER_X - 75, 250);
+  ctx.fillText('SPREKK!', TOWER_X - 70, 262);
+}
+
+function drawPlayer() {
+  if (state === 'splash' || state === 'done') return;
+
+  ctx.save();
+  ctx.translate(player.x, player.y);
+  ctx.rotate(player.angle);
+
+  // Kropp
+  ctx.fillStyle = '#ff4500';
+  ctx.fillRect(-5, -4, 10, 14);
+
+  // Hode
+  ctx.fillStyle = '#ffccaa';
+  ctx.beginPath();
+  ctx.arc(0, -8, 6, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Hår
+  ctx.fillStyle = '#5a3a1a';
+  ctx.beginPath();
+  ctx.arc(0, -10, 6, Math.PI, Math.PI * 2);
+  ctx.fill();
+
+  // Armer
+  ctx.strokeStyle = '#ffccaa';
+  ctx.lineWidth = 3;
+  ctx.lineCap = 'round';
+  if (state === 'falling') {
+    // Strake armer framover
+    ctx.beginPath();
+    ctx.moveTo(-3, -2);
+    ctx.lineTo(-6, -14);
+    ctx.moveTo(3, -2);
+    ctx.lineTo(6, -14);
+    ctx.stroke();
+  } else {
+    // Armer nedover
+    ctx.beginPath();
+    ctx.moveTo(-4, 0);
+    ctx.lineTo(-6, 8);
+    ctx.moveTo(4, 0);
+    ctx.lineTo(6, 8);
+    ctx.stroke();
+  }
+
+  // Bein
+  ctx.strokeStyle = '#2c3e50';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(-2, 10);
+  ctx.lineTo(-3, 18);
+  ctx.moveTo(2, 10);
+  ctx.lineTo(3, 18);
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function drawSplash() {
+  splashParticles.forEach(p => {
+    ctx.fillStyle = `rgba(180,220,255,${p.opacity})`;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+    ctx.fill();
+
+    p.x += p.vx;
+    p.y += p.vy;
+    p.vy += 0.15;
+    p.opacity -= 0.015;
+    p.r *= 0.99;
+  });
+  splashParticles = splashParticles.filter(p => p.opacity > 0);
+}
+
+// =====================================================
+// GAME LOGIC
+// =====================================================
+function update() {
+  gameTime++;
+
+  if (state === 'falling') {
+    // Gravitasjon
+    player.vy += 0.35;
+    player.y += player.vy;
+    player.x += player.vx;
+
+    // Rotasjon
+    if (keys['ArrowLeft'] || keys['a']) {
+      player.rotation -= 0.12;
+      player.totalRotation += 0.12;
+    }
+    if (keys['ArrowRight'] || keys['d']) {
+      player.rotation += 0.12;
+      player.totalRotation += 0.12;
+    }
+    player.angle += player.rotation;
+    player.rotation *= 0.98;
+
+    // Landing
+    if (player.y >= WATER_LEVEL - 10) {
+      splash();
+    }
+  }
+}
+
+function splash() {
+  state = 'splash';
+
+  // Beregn poeng
+  const rotations = Math.floor(player.totalRotation / (Math.PI * 2));
+  const landingAngle = ((player.angle % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+
+  // Ideel landing er hode-først (vertikal)
+  // 0 / PI/2 / PI / 3PI/2 = horisontalt, PI = hodestups (beste)
+  let landingScore = 0;
+  const angleDeg = (landingAngle * 180 / Math.PI) % 360;
+  // Beste: 180° (hodestups)
+  const diff = Math.min(Math.abs(angleDeg - 180), Math.abs(angleDeg - 540), Math.abs(angleDeg + 180));
+  if (diff < 15) landingScore = 100;        // Perfekt hodestups
+  else if (diff < 30) landingScore = 75;
+  else if (diff < 60) landingScore = 50;
+  else if (diff < 90) landingScore = 25;
+  else landingScore = 10;                    // Magesmell
+
+  // Rotasjons-bonus
+  const rotationBonus = rotations * 50;
+
+  // Budsjett-besparelse (random fun bonus)
+  const budgetBonus = Math.floor(Math.random() * 200) + 50;
+
+  const total = landingScore + rotationBonus + budgetBonus;
+  currentScore = total;
+
+  currentStats = {
+    rotations,
+    landingScore,
+    rotationBonus,
+    budgetBonus,
+    total
+  };
+
+  // Splash particles
+  for (let i = 0; i < 40; i++) {
+    const angle = -Math.PI/2 + (Math.random() - 0.5) * Math.PI * 1.2;
+    const speed = 3 + Math.random() * 6;
+    splashParticles.push({
+      x: player.x + (Math.random() - 0.5) * 10,
+      y: WATER_LEVEL,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      r: 3 + Math.random() * 4,
+      opacity: 0.9
+    });
+  }
+
+  // Oppdater HUD
+  document.getElementById('rotations').textContent = rotations;
+  document.getElementById('score').textContent = total;
+
+  setTimeout(() => endDive(), 1500);
+}
+
+function endDive() {
+  state = 'done';
+
+  if (currentScore > bestScore) {
+    bestScore = currentScore;
+    localStorage.setItem('stupetaarn_best', bestScore);
+  }
+  document.getElementById('best').textContent = bestScore;
+
+  // Bedøm stupet
+  let title, message;
+  if (currentStats.landingScore >= 100) {
+    title = '🏆 Perfekt hodestups!';
+    message = 'Dommerne gir deg topp karakter. Stupetårnet er endelig verdt hver krone.';
+  } else if (currentStats.landingScore >= 75) {
+    title = '⭐ Flott stup!';
+    message = 'Nesten perfekt landing. Hamar applauderer deg.';
+  } else if (currentStats.landingScore >= 50) {
+    title = '👏 Godt forsøk';
+    message = 'Dommerne nikker anerkjennende. Ikke verst for 80 millioner.';
+  } else if (currentStats.landingScore >= 25) {
+    title = '😅 Det gikk...';
+    message = 'Litt skjevt, men fortsatt bedre enn budsjettstyringen var.';
+  } else {
+    title = '💥 MAGESMELL!';
+    message = 'Au au au! Vannet skvalket over halve Koigen.';
+  }
+
+  document.getElementById('end-title').textContent = title;
+  document.getElementById('end-message').textContent = message;
+  document.getElementById('breakdown').innerHTML = `
+    <div><span>Landing:</span><strong>${currentStats.landingScore}</strong></div>
+    <div><span>Rotasjoner (${currentStats.rotations}):</span><strong>${currentStats.rotationBonus}</strong></div>
+    <div><span>Budsjett-besparelse:</span><strong>${currentStats.budgetBonus}</strong></div>
+    <div style="border-top:1px solid rgba(255,255,255,0.2); margin-top:8px; padding-top:8px;"><span>Total:</span><strong>${currentStats.total}</strong></div>
+  `;
+  document.getElementById('final-score').textContent = currentScore + ' poeng';
+  document.getElementById('end-overlay').classList.remove('hidden');
+}
+
+function render() {
+  drawBackground();
+  drawTower();
+  if (state !== 'splash' && state !== 'done') drawPlayer();
+  drawSplash();
+
+  // Oppdater HUD altitude
+  if (state === 'falling') {
+    const altitude = Math.max(0, ((WATER_LEVEL - player.y) / (WATER_LEVEL - TOWER_TOP)) * 22);
+    document.getElementById('altitude').textContent = altitude.toFixed(1) + 'm';
+    document.getElementById('rotations').textContent = Math.floor(player.totalRotation / (Math.PI * 2));
+  }
+}
+
+function loop() {
+  update();
+  render();
+  requestAnimationFrame(loop);
+}
+
+function startGame() {
+  state = 'falling';
+  player = {
+    x: TOWER_X,
+    y: TOWER_TOP - 20,
+    vx: (Math.random() - 0.5) * 0.8,
+    vy: -2,
+    angle: 0,
+    rotation: 0,
+    totalRotation: 0
+  };
+  splashParticles = [];
+  currentScore = 0;
+  document.getElementById('altitude').textContent = '22m';
+  document.getElementById('rotations').textContent = '0';
+  document.getElementById('score').textContent = '0';
+  document.getElementById('best').textContent = bestScore;
+  document.getElementById('start-overlay').classList.add('hidden');
+  document.getElementById('end-overlay').classList.add('hidden');
+}
+
+function loadHighscores() {
+  document.getElementById('best').textContent = bestScore;
+  const scores = JSON.parse(localStorage.getItem('stupetaarn_scores') || '[]');
+  const list = document.getElementById('highscore-list');
+  if (scores.length === 0) {
+    list.innerHTML = '<li><span class="rank">—</span><span>Ingen poeng ennå – bli den første!</span><span></span></li>';
+    return;
+  }
+  list.innerHTML = scores.slice(0, 10).map((s, i) =>
+    `<li><span class="rank">${i+1}.</span><span>${s.name}</span><span>${s.score} poeng</span></li>`
+  ).join('');
+}
+
+function saveAndRestart() {
+  if (currentScore > 0) {
+    const name = prompt('Gratulerer, stuper! Skriv navnet ditt:', 'Stuper') || 'Anonym';
+    const scores = JSON.parse(localStorage.getItem('stupetaarn_scores') || '[]');
+    scores.push({ name: name.substring(0, 20), score: currentScore, date: new Date().toISOString() });
+    scores.sort((a, b) => b.score - a.score);
+    localStorage.setItem('stupetaarn_scores', JSON.stringify(scores.slice(0, 10)));
+    loadHighscores();
+  }
+  startGame();
+}
+
+function shareScore() {
+  const text = `Jeg fikk ${currentScore} poeng da jeg stupte fra Hamars famøse stupetårn! 🤿 Klarer du bedre?`;
+  const url = window.location.href;
+  if (navigator.share) {
+    navigator.share({ title: 'Stup fra Stupetårnet', text, url });
+  } else {
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}&quote=${encodeURIComponent(text)}`, '_blank');
+  }
+}
+
+// Kontroller
+window.addEventListener('keydown', e => {
+  keys[e.key] = true;
+  if ([' ', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) e.preventDefault();
+  if ((e.key === ' ' || e.key === 'ArrowUp') && state === 'idle') startGame();
+});
+window.addEventListener('keyup', e => { keys[e.key] = false; });
+
+// Mobil
+function bindMobile(id, key) {
+  const btn = document.getElementById(id);
+  if (!btn) return;
+  ['touchstart', 'mousedown'].forEach(ev => btn.addEventListener(ev, e => { e.preventDefault(); keys[key] = true; }));
+  ['touchend', 'touchcancel', 'mouseup', 'mouseleave'].forEach(ev => btn.addEventListener(ev, e => { e.preventDefault(); keys[key] = false; }));
+}
+bindMobile('btn-left', 'ArrowLeft');
+bindMobile('btn-right', 'ArrowRight');
+document.getElementById('btn-jump').addEventListener('click', () => { if (state === 'idle' || state === 'done') startGame(); });
+
+loadHighscores();
+loop();
+</script>
+</body>
+</html>

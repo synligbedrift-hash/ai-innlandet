@@ -3,16 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Skibladner 2026 – Styr Mjøsas stolthet | AI Innlandet</title>
-<meta name="description" content="Styr Skibladner mellom Hamar, Gjøvik og Lillehammer. Plukk opp passasjerer, unngå tåka, og bli Mjøsas beste AI-kaptein!">
+<title>Skibladner 2026 – Mjøsas stolthet | AI Innlandet</title>
+<meta name="description" content="Styr Skibladner mellom Hamar, Gjøvik og Lillehammer. Unngå den fryktede Mjøs-Gjedda!">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
-    background: linear-gradient(180deg, #0a1628 0%, #1a3a5c 50%, #2d5a8a 100%);
+    background: linear-gradient(180deg, #0a1628 0%, #1a3a5c 100%);
     color: #fff;
     min-height: 100vh;
-    overflow-x: hidden;
   }
   .top-bar {
     background: rgba(10, 22, 40, 0.9);
@@ -27,7 +26,7 @@
   .top-bar .brand { font-weight: 800; letter-spacing: 1px; }
   .container { max-width: 900px; margin: 0 auto; padding: 24px; text-align: center; }
   h1 {
-    font-size: clamp(1.8em, 4vw, 2.8em);
+    font-size: clamp(1.8em, 4vw, 2.6em);
     margin-bottom: 8px;
     background: linear-gradient(90deg, #00d4ff, #ff00ea);
     -webkit-background-clip: text;
@@ -35,9 +34,8 @@
     background-clip: text;
     font-weight: 800;
   }
-  .tagline { opacity: 0.8; margin-bottom: 24px; font-size: 1em; }
+  .tagline { opacity: 0.85; margin-bottom: 20px; font-size: 1em; max-width: 640px; margin-left:auto; margin-right:auto; }
 
-  /* Game */
   #game-wrap {
     position: relative;
     max-width: 800px;
@@ -47,26 +45,19 @@
     box-shadow: 0 20px 60px rgba(0,0,0,0.5);
     border: 2px solid rgba(255,255,255,0.15);
   }
-  canvas {
-    display: block;
-    width: 100%;
-    background: linear-gradient(180deg, #87ceeb 0%, #4a90bc 40%, #2d5a8a 100%);
-  }
+  canvas { display: block; width: 100%; }
 
-  /* HUD */
   .hud {
     position: absolute;
-    top: 12px;
-    left: 12px;
-    right: 12px;
+    top: 12px; left: 12px; right: 12px;
     display: flex;
     justify-content: space-between;
-    gap: 12px;
+    gap: 10px;
     pointer-events: none;
     flex-wrap: wrap;
   }
   .hud-item {
-    background: rgba(0,0,0,0.6);
+    background: rgba(0,0,0,0.65);
     backdrop-filter: blur(6px);
     padding: 8px 14px;
     border-radius: 10px;
@@ -74,34 +65,29 @@
     border: 1px solid rgba(255,255,255,0.2);
   }
   .hud-item strong { color: #00d4ff; }
+  .hud-item.danger strong { color: #ff4444; }
 
-  /* Kaptein-kommentar */
   .captain-bubble {
     position: absolute;
-    bottom: 80px;
-    left: 20px;
-    right: 20px;
-    background: rgba(0,0,0,0.75);
-    padding: 14px 18px;
-    border-radius: 14px;
+    bottom: 14px; left: 14px; right: 14px;
+    background: rgba(0,0,0,0.8);
+    padding: 12px 16px;
+    border-radius: 12px;
     border-left: 4px solid #ffd700;
     font-size: 0.9em;
     backdrop-filter: blur(6px);
     display: none;
+    text-align: left;
     animation: slideIn 0.4s ease-out;
   }
   .captain-bubble.show { display: block; }
-  .captain-bubble strong { color: #ffd700; display: block; margin-bottom: 4px; font-size: 0.85em; }
-  @keyframes slideIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
+  .captain-bubble strong { color: #ffd700; display: block; margin-bottom: 2px; font-size: 0.8em; }
+  @keyframes slideIn { from { opacity:0; transform:translateY(10px);} to { opacity:1; transform:translateY(0);} }
 
-  /* Overlay (start/slutt) */
   .overlay {
     position: absolute;
     inset: 0;
-    background: rgba(10, 22, 40, 0.92);
+    background: rgba(10, 22, 40, 0.93);
     backdrop-filter: blur(8px);
     display: flex;
     align-items: center;
@@ -120,16 +106,16 @@
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
-  .overlay p { max-width: 500px; margin-bottom: 20px; opacity: 0.9; line-height: 1.6; }
-  .overlay .score-display {
+  .overlay p { max-width: 520px; margin-bottom: 16px; opacity: 0.9; line-height: 1.6; }
+  .score-display {
     font-size: 3em;
     font-weight: 800;
     color: #ffd700;
-    margin: 16px 0;
+    margin: 12px 0;
   }
   .overlay button {
-    padding: 14px 32px;
-    font-size: 1.1em;
+    padding: 14px 30px;
+    font-size: 1em;
     font-weight: 700;
     background: linear-gradient(90deg, #00d4ff, #ff00ea);
     color: #fff;
@@ -145,12 +131,12 @@
     border: 1px solid rgba(255,255,255,0.3);
   }
   .controls-info {
-    margin-top: 16px;
-    padding: 16px;
+    margin-top: 14px;
+    padding: 14px;
     background: rgba(255,255,255,0.05);
     border-radius: 10px;
     font-size: 0.85em;
-    opacity: 0.8;
+    opacity: 0.85;
     max-width: 420px;
   }
   .controls-info kbd {
@@ -163,7 +149,6 @@
     border: 1px solid rgba(255,255,255,0.2);
   }
 
-  /* Mobil-kontroller */
   .mobile-controls {
     display: none;
     margin-top: 16px;
@@ -171,12 +156,12 @@
     justify-content: center;
   }
   .mobile-btn {
-    width: 80px; height: 80px;
-    background: rgba(0,0,0,0.6);
+    width: 72px; height: 72px;
+    background: rgba(0,0,0,0.7);
     border: 2px solid rgba(255,255,255,0.3);
     border-radius: 50%;
     color: #fff;
-    font-size: 1.8em;
+    font-size: 1.6em;
     cursor: pointer;
     user-select: none;
     -webkit-user-select: none;
@@ -187,7 +172,6 @@
     .mobile-controls { display: flex; }
   }
 
-  /* Highscore */
   .highscore-section {
     max-width: 800px;
     margin: 32px auto;
@@ -207,7 +191,6 @@
   .highscore-list li:first-child { font-weight: 700; color: #ffd700; }
   .highscore-list .rank { opacity: 0.6; width: 40px; }
 
-  /* CTA til hovedside */
   .cta-section {
     max-width: 800px;
     margin: 40px auto;
@@ -256,30 +239,29 @@
 
 <div class="container">
   <h1>⛴️ Skibladner 2026</h1>
-  <p class="tagline">Styr Mjøsas stolthet mellom Hamar, Gjøvik og Lillehammer. Plukk opp passasjerer, unngå tåka, og bli den beste AI-kapteinen i Innlandet!</p>
+  <p class="tagline">Besøk alle tre Mjøs-byene – Hamar, Gjøvik og Lillehammer – men pass deg for den fryktede <strong>Mjøs-Gjedda!</strong></p>
 
   <div id="game-wrap">
-    <canvas id="game" width="800" height="500"></canvas>
+    <canvas id="game" width="800" height="600"></canvas>
 
     <div class="hud">
-      <div class="hud-item">👥 Passasjerer: <strong id="passengers">0</strong></div>
-      <div class="hud-item">⛽ Drivstoff: <strong id="fuel">100%</strong></div>
-      <div class="hud-item">⭐ Poeng: <strong id="score">0</strong></div>
-      <div class="hud-item">🎯 Mål: <strong id="target">Hamar</strong></div>
+      <div class="hud-item">👥 <strong id="passengers">0</strong></div>
+      <div class="hud-item">⭐ <strong id="score">0</strong></div>
+      <div class="hud-item">🎯 <strong id="target">Gjøvik</strong></div>
+      <div class="hud-item danger">❤️ <strong id="lives">3</strong></div>
     </div>
 
     <div class="captain-bubble" id="captain">
-      <strong>AI-kaptein Ola sier:</strong>
+      <strong>AI-kaptein Ola:</strong>
       <span id="captain-text">Velkommen om bord!</span>
     </div>
 
     <div class="overlay" id="start-overlay">
       <h2>⛴️ Velkommen, kaptein!</h2>
-      <p>Du skal styre Skibladner mellom de tre Mjøs-byene. Plukk opp passasjerer ved bryggene, unngå tåkebanker og spar drivstoff. Jo flere passasjerer og byer du besøker, jo høyere poeng!</p>
+      <p>Du skal besøke alle tre Mjøs-byene – Hamar, Gjøvik og Lillehammer – og plukke opp passasjerer. Men se opp: <strong>Mjøs-Gjedda</strong> svømmer rundt i innsjøen og vil gjerne ha et stykke av skroget ditt!</p>
       <div class="controls-info">
         <strong>Kontroller:</strong><br>
-        <kbd>←</kbd> <kbd>→</kbd> for å styre<br>
-        <kbd>↑</kbd> for fart, <kbd>↓</kbd> for å bremse<br>
+        <kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd> for å styre<br>
         <small>(På mobil: bruk knappene under)</small>
       </div>
       <button onclick="startGame()">🚀 Start reisen</button>
@@ -290,8 +272,8 @@
       <p id="end-message">Du gjorde en god jobb, kaptein.</p>
       <div class="score-display" id="final-score">0</div>
       <div>
-        <button onclick="saveAndRestart()">🏆 Lagre poeng og spill igjen</button>
-        <button class="secondary" onclick="shareScore()">📤 Del på Facebook</button>
+        <button onclick="saveAndRestart()">🏆 Lagre & spill igjen</button>
+        <button class="secondary" onclick="shareScore()">📤 Del</button>
       </div>
     </div>
   </div>
@@ -299,6 +281,7 @@
   <div class="mobile-controls">
     <button class="mobile-btn" id="btn-left">◀</button>
     <button class="mobile-btn" id="btn-up">▲</button>
+    <button class="mobile-btn" id="btn-down">▼</button>
     <button class="mobile-btn" id="btn-right">▶</button>
   </div>
 
@@ -322,318 +305,461 @@
 
 <script>
 // =====================================================
-// SKIBLADNER 2026 - Game logic
+// SKIBLADNER 2026 v2 - Top-down Mjøsa med Mjøs-Gjedda
 // =====================================================
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
-const W = canvas.width;
-const H = canvas.height;
+const W = canvas.width;   // 800
+const H = canvas.height;  // 600
 
-// Byer
+// Top-down kart over Mjøsa (forenklet form)
+// Hamar = sør-øst, Gjøvik = midt-vest, Lillehammer = nord
 const CITIES = [
-  { name: 'Hamar', x: 120, y: 400, color: '#e74c3c' },
-  { name: 'Gjøvik', x: 400, y: 200, color: '#f39c12' },
-  { name: 'Lillehammer', x: 680, y: 80, color: '#2ecc71' }
+  { name: 'Hamar',       x: 610, y: 480, visited: false, color: '#e74c3c' },
+  { name: 'Gjøvik',      x: 260, y: 340, visited: false, color: '#f39c12' },
+  { name: 'Lillehammer', x: 450, y: 100, visited: false, color: '#2ecc71' }
+];
+
+// Mjøsa-form (punkter som definerer vannkanten)
+const LAKE_SHAPE = [
+  {x: 400, y: 50},   // Lillehammer-siden (nord)
+  {x: 520, y: 80},
+  {x: 600, y: 150},
+  {x: 650, y: 250},
+  {x: 690, y: 380},
+  {x: 700, y: 470},
+  {x: 650, y: 540},
+  {x: 550, y: 560},
+  {x: 430, y: 540},
+  {x: 320, y: 500},
+  {x: 220, y: 440},
+  {x: 180, y: 360},
+  {x: 200, y: 260},
+  {x: 250, y: 180},
+  {x: 320, y: 110},
+  {x: 400, y: 50}
 ];
 
 // Kaptein-replikker
 const CAPTAIN_QUOTES = {
   start: [
     "Velkommen om bord! Mjøsa kaller.",
-    "Full maskin! Vi har passasjerer som venter.",
+    "Full maskin mot første brygge!",
     "Fin dag for en tur på Mjøsa, sjef!",
-    "Husk: Mjøsa er Norges største innsjø!"
-  ],
-  pickup: [
-    "Gode passasjerer, dette blir stas!",
-    "Nok en fornøyd Innlandsbo om bord.",
-    "Flotte folk, ja. Skibladner lever videre!",
-    "Der tok vi ombord enda en reisende!",
-    "Nydelig! Mer folk, mer moro."
+    "Husk å unngå Mjøs-Gjedda – hun er sulten i dag!"
   ],
   cityReached: [
-    "Perfekt tilbakelegging!",
-    "Der er vi framme, sjef!",
+    "Framme! Passasjerene er fornøyde.",
+    "Perfekt tilbakelegging, sjef!",
     "Se der ja – rett på brygga!",
     "Du styrer som en ekte kaptein!"
   ],
-  fogWarning: [
-    "Obs! Tåkebank rett forut!",
-    "Kjør forsiktig, det er tåke i lufta.",
-    "Der kommer tåka – vær på vakt!"
+  allCitiesVisited: [
+    "Alle tre byene besøkt! Fantastisk runde!",
+    "Mjøsas mester – godt gjort!",
+    "Perfekt! La oss gjøre en runde til!"
   ],
-  fogHit: [
-    "Au! Vi mistet noen passasjerer i tåka!",
-    "Det der var en stygg en. Mer forsiktig neste gang.",
-    "Pass på, vi er ikke en isbryter!"
+  pikeWarning: [
+    "Obs! Gjedda nærmer seg!",
+    "Pass på – Mjøs-Gjedda lurer!",
+    "Se opp! Store finner i vannet!"
   ],
-  lowFuel: [
-    "Drivstoffet begynner å gå tomt, sjef!",
-    "Kjør til nærmeste brygge snart!",
-    "Vi trenger påfyll – nå!"
+  pikeHit: [
+    "AU! Gjedda tok en bit av skroget!",
+    "Forbannet fisk! Vi mistet passasjerer!",
+    "Det gjorde vondt. Pass på neste gang!"
   ],
   random: [
     "Visste du at Skibladner ble bygget i 1856?",
-    "Mjøsa har et kritthvitt speilbilde i dag.",
-    "Hadde det bare vært lokomotivpris på brensel nå...",
-    "Helgøya på babord side – fint sted.",
-    "Det lukter kaffekok fra salongen.",
-    "Dette er ikke en ekte Skibladner, men moro er det!",
-    "Om Bjørnson hadde sett oss nå..."
+    "Mjøsa er Norges største innsjø.",
+    "Helgøya er Norges største ferskvannsøy.",
+    "Legenden sier Mjøs-Gjedda er 3 meter lang...",
+    "Bjørnson skrev dikt på Mjøsas bredder.",
+    "Det lukter kaffekok fra salongen!",
+    "Skibladner har gått her siden 1856!"
   ]
 };
 
 // Game state
-let boat = { x: 120, y: 400, vx: 0, vy: 0, angle: 0 };
+let boat = { x: 450, y: 300, vx: 0, vy: 0, angle: -Math.PI/2 };
+let pike = { x: 400, y: 400, angle: 0, targetAngle: 0, speed: 1.2 };
 let passengers = 0;
-let fuel = 100;
 let score = 0;
-let currentTargetIdx = 1; // Starter i Hamar (0), skal til Gjøvik (1)
-let fogBanks = [];
-let clouds = [];
+let lives = 3;
+let currentTargetIdx = 1; // Starter ved Gjøvik
 let gameRunning = false;
 let gameTime = 0;
 let keys = {};
 let lastQuoteTime = 0;
+let invulnerable = 0;
+let ripples = [];
 
-// Tegn piksel-skibladner
-function drawBoat() {
-  ctx.save();
-  ctx.translate(boat.x, boat.y);
-  ctx.rotate(boat.angle);
-
-  // Skrog
-  ctx.fillStyle = '#8b4513';
-  ctx.fillRect(-25, -5, 50, 12);
-  ctx.fillStyle = '#654321';
-  ctx.fillRect(-25, 5, 50, 3);
-
-  // Dekk (hvit)
-  ctx.fillStyle = '#f4f4f4';
-  ctx.fillRect(-20, -10, 40, 5);
-
-  // Hjulhus (hvit/rød)
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(-12, -18, 24, 10);
-  ctx.fillStyle = '#c0392b';
-  ctx.fillRect(-12, -18, 24, 2);
-
-  // Skorstein
-  ctx.fillStyle = '#2c2c2c';
-  ctx.fillRect(-3, -28, 6, 12);
-  ctx.fillStyle = '#c0392b';
-  ctx.fillRect(-4, -28, 8, 2);
-
-  // Hjul
-  ctx.fillStyle = '#654321';
-  ctx.beginPath();
-  ctx.arc(-18, 0, 8, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.arc(18, 0, 8, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Røyk
-  if (gameRunning) {
-    ctx.fillStyle = 'rgba(200,200,200,0.6)';
-    ctx.beginPath();
-    ctx.arc(0, -32 - Math.sin(gameTime * 0.1) * 2, 4, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = 'rgba(200,200,200,0.3)';
-    ctx.beginPath();
-    ctx.arc(2, -38 - Math.sin(gameTime * 0.08) * 3, 5, 0, Math.PI * 2);
-    ctx.fill();
+// Sjekk om et punkt er i innsjøen
+function isInLake(x, y) {
+  let inside = false;
+  for (let i = 0, j = LAKE_SHAPE.length - 1; i < LAKE_SHAPE.length; j = i++) {
+    const xi = LAKE_SHAPE[i].x, yi = LAKE_SHAPE[i].y;
+    const xj = LAKE_SHAPE[j].x, yj = LAKE_SHAPE[j].y;
+    const intersect = ((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+    if (intersect) inside = !inside;
   }
-
-  ctx.restore();
+  return inside;
 }
 
-// Bakgrunn: fjell, land, vann
-function drawBackground() {
-  // Himmel-gradient
-  const sky = ctx.createLinearGradient(0, 0, 0, H);
-  sky.addColorStop(0, '#87ceeb');
-  sky.addColorStop(0.4, '#4a90bc');
-  sky.addColorStop(1, '#1e4d6b');
-  ctx.fillStyle = sky;
+// Tegn landskap (land rundt Mjøsa)
+function drawLandscape() {
+  // Himmelen over / bakgrunnsfyll
+  const bg = ctx.createLinearGradient(0, 0, 0, H);
+  bg.addColorStop(0, '#4a7a4a');
+  bg.addColorStop(0.5, '#3a6a3a');
+  bg.addColorStop(1, '#2a5a2a');
+  ctx.fillStyle = bg;
   ctx.fillRect(0, 0, W, H);
 
-  // Fjell i bakgrunnen
-  ctx.fillStyle = '#2c4a5e';
-  ctx.beginPath();
-  ctx.moveTo(0, 120);
-  ctx.lineTo(150, 40);
-  ctx.lineTo(280, 90);
-  ctx.lineTo(420, 30);
-  ctx.lineTo(550, 70);
-  ctx.lineTo(700, 20);
-  ctx.lineTo(800, 60);
-  ctx.lineTo(800, 140);
-  ctx.lineTo(0, 140);
-  ctx.closePath();
-  ctx.fill();
+  // Tekstur på land (tilfeldige "trær")
+  ctx.fillStyle = 'rgba(30, 60, 30, 0.3)';
+  for (let i = 0; i < 100; i++) {
+    const x = (i * 37) % W;
+    const y = (i * 73) % H;
+    if (!isInLake(x, y)) {
+      ctx.beginPath();
+      ctx.arc(x, y, 8, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
 
-  // Fjell litt nærmere
-  ctx.fillStyle = '#3a5a72';
+  // Mjøsa (vann)
+  ctx.save();
   ctx.beginPath();
-  ctx.moveTo(0, 160);
-  ctx.lineTo(80, 100);
-  ctx.lineTo(200, 140);
-  ctx.lineTo(340, 90);
-  ctx.lineTo(480, 130);
-  ctx.lineTo(620, 100);
-  ctx.lineTo(800, 140);
-  ctx.lineTo(800, 180);
-  ctx.lineTo(0, 180);
+  ctx.moveTo(LAKE_SHAPE[0].x, LAKE_SHAPE[0].y);
+  for (let i = 1; i < LAKE_SHAPE.length; i++) {
+    ctx.lineTo(LAKE_SHAPE[i].x, LAKE_SHAPE[i].y);
+  }
   ctx.closePath();
-  ctx.fill();
 
-  // Vann
-  const water = ctx.createLinearGradient(0, 180, 0, H);
-  water.addColorStop(0, '#3a6b8c');
-  water.addColorStop(1, '#1a3a5c');
+  const water = ctx.createRadialGradient(W/2, H/2, 50, W/2, H/2, 350);
+  water.addColorStop(0, '#4a90bc');
+  water.addColorStop(0.6, '#2d6a8e');
+  water.addColorStop(1, '#1a4a6c');
   ctx.fillStyle = water;
-  ctx.fillRect(0, 180, W, H - 180);
+  ctx.fill();
 
-  // Bølger
+  // Kant rundt innsjøen
+  ctx.strokeStyle = '#8b7355';
+  ctx.lineWidth = 3;
+  ctx.stroke();
+
+  ctx.restore();
+
+  // Bølger (enkle linjer som beveger seg)
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(LAKE_SHAPE[0].x, LAKE_SHAPE[0].y);
+  for (let i = 1; i < LAKE_SHAPE.length; i++) {
+    ctx.lineTo(LAKE_SHAPE[i].x, LAKE_SHAPE[i].y);
+  }
+  ctx.closePath();
+  ctx.clip();
+
   ctx.strokeStyle = 'rgba(255,255,255,0.15)';
   ctx.lineWidth = 1;
-  for (let i = 0; i < 8; i++) {
-    const y = 200 + i * 40;
+  for (let i = 0; i < 12; i++) {
+    const y = 80 + i * 50;
     ctx.beginPath();
-    for (let x = 0; x < W; x += 10) {
-      const yOff = Math.sin((x + gameTime * 0.5 + i * 20) * 0.05) * 2;
-      if (x === 0) ctx.moveTo(x, y + yOff);
+    for (let x = 100; x < 700; x += 10) {
+      const yOff = Math.sin((x + gameTime * 0.8 + i * 30) * 0.04) * 2;
+      if (x === 100) ctx.moveTo(x, y + yOff);
       else ctx.lineTo(x, y + yOff);
     }
     ctx.stroke();
   }
-}
 
-// Tegn skyer
-function drawClouds() {
-  clouds.forEach(c => {
-    ctx.fillStyle = `rgba(255,255,255,${c.opacity})`;
+  // Ringer (ripples) etter båten og gjedda
+  ripples.forEach(r => {
+    ctx.strokeStyle = `rgba(255,255,255,${r.opacity})`;
+    ctx.lineWidth = 1.5;
     ctx.beginPath();
-    ctx.arc(c.x, c.y, c.r, 0, Math.PI * 2);
-    ctx.arc(c.x + c.r * 0.7, c.y, c.r * 0.8, 0, Math.PI * 2);
-    ctx.arc(c.x - c.r * 0.7, c.y, c.r * 0.7, 0, Math.PI * 2);
-    ctx.fill();
-    c.x += c.vx;
-    if (c.x > W + 50) c.x = -50;
+    ctx.arc(r.x, r.y, r.radius, 0, Math.PI * 2);
+    ctx.stroke();
   });
+
+  ctx.restore();
+
+  // "MJØSA"-tekst i midten
+  ctx.save();
+  ctx.fillStyle = 'rgba(255,255,255,0.08)';
+  ctx.font = 'bold 60px -apple-system, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('MJØSA', 430, 320);
+  ctx.restore();
 }
 
-// Byer
+// Tegn byer med brygge
 function drawCities() {
   CITIES.forEach((city, idx) => {
     const isTarget = idx === currentTargetIdx;
 
-    // Brygge
-    ctx.fillStyle = '#8b4513';
-    ctx.fillRect(city.x - 20, city.y - 3, 40, 6);
+    // Brygge (stikker ut i vannet)
+    ctx.fillStyle = '#6b4423';
+    ctx.fillRect(city.x - 18, city.y - 4, 36, 8);
+    ctx.fillStyle = '#8b5a33';
+    ctx.fillRect(city.x - 18, city.y - 4, 36, 2);
 
-    // Bygning
+    // Bygninger (2-3 stk)
+    const baseY = city.y - 10;
+
+    // Bygning 1 (venstre)
     ctx.fillStyle = city.color;
-    ctx.fillRect(city.x - 15, city.y - 30, 30, 27);
-
-    // Tak
+    ctx.fillRect(city.x - 28, baseY - 28, 18, 28);
     ctx.fillStyle = '#2c2c2c';
     ctx.beginPath();
-    ctx.moveTo(city.x - 18, city.y - 30);
-    ctx.lineTo(city.x, city.y - 45);
-    ctx.lineTo(city.x + 18, city.y - 30);
+    ctx.moveTo(city.x - 30, baseY - 28);
+    ctx.lineTo(city.x - 19, baseY - 40);
+    ctx.lineTo(city.x - 8, baseY - 28);
     ctx.closePath();
     ctx.fill();
-
-    // Vinduer
     ctx.fillStyle = '#ffeb3b';
-    ctx.fillRect(city.x - 10, city.y - 22, 5, 5);
-    ctx.fillRect(city.x + 5, city.y - 22, 5, 5);
-    ctx.fillRect(city.x - 10, city.y - 12, 5, 5);
-    ctx.fillRect(city.x + 5, city.y - 12, 5, 5);
+    ctx.fillRect(city.x - 25, baseY - 22, 4, 4);
+    ctx.fillRect(city.x - 16, baseY - 22, 4, 4);
+    ctx.fillRect(city.x - 25, baseY - 12, 4, 4);
 
-    // Navn
+    // Bygning 2 (høyre)
+    ctx.fillStyle = city.color;
+    ctx.fillRect(city.x + 8, baseY - 24, 16, 24);
+    ctx.fillStyle = '#2c2c2c';
+    ctx.beginPath();
+    ctx.moveTo(city.x + 6, baseY - 24);
+    ctx.lineTo(city.x + 16, baseY - 36);
+    ctx.lineTo(city.x + 26, baseY - 24);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#ffeb3b';
+    ctx.fillRect(city.x + 11, baseY - 18, 4, 4);
+    ctx.fillRect(city.x + 18, baseY - 18, 4, 4);
+
+    // Kirke bak (midten)
+    ctx.fillStyle = '#e8e8e8';
+    ctx.fillRect(city.x - 5, baseY - 38, 10, 18);
+    ctx.fillStyle = '#2c2c2c';
+    ctx.beginPath();
+    ctx.moveTo(city.x - 6, baseY - 38);
+    ctx.lineTo(city.x, baseY - 52);
+    ctx.lineTo(city.x + 6, baseY - 38);
+    ctx.closePath();
+    ctx.fill();
+    // Kors
+    ctx.fillRect(city.x - 1, baseY - 58, 2, 8);
+    ctx.fillRect(city.x - 3, baseY - 55, 6, 2);
+
+    // Bynavn
     ctx.fillStyle = '#fff';
     ctx.font = 'bold 14px -apple-system, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(city.name, city.x, city.y - 52);
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 3;
+    ctx.strokeText(city.name, city.x, city.y + 24);
+    ctx.fillText(city.name, city.x, city.y + 24);
+
+    // Besøkt?
+    if (city.visited) {
+      ctx.fillStyle = '#2ecc71';
+      ctx.beginPath();
+      ctx.arc(city.x + 22, baseY - 40, 7, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 10px sans-serif';
+      ctx.fillText('✓', city.x + 22, baseY - 37);
+    }
 
     // Mål-indikator
-    if (isTarget) {
+    if (isTarget && !city.visited) {
       ctx.strokeStyle = '#ffd700';
       ctx.lineWidth = 3;
       ctx.setLineDash([5, 5]);
       ctx.beginPath();
-      ctx.arc(city.x, city.y - 15, 40 + Math.sin(gameTime * 0.08) * 4, 0, Math.PI * 2);
+      ctx.arc(city.x, city.y - 10, 45 + Math.sin(gameTime * 0.08) * 4, 0, Math.PI * 2);
       ctx.stroke();
       ctx.setLineDash([]);
 
-      // Pil som peker mot målet
+      // Pil over
       ctx.fillStyle = '#ffd700';
-      ctx.font = 'bold 16px -apple-system, sans-serif';
-      ctx.fillText('🎯', city.x, city.y - 65);
+      ctx.font = 'bold 20px -apple-system, sans-serif';
+      ctx.fillText('▼', city.x, city.y - 60);
     }
   });
 }
 
-// Tåkebanker
-function drawFog() {
-  fogBanks.forEach(fog => {
-    ctx.fillStyle = `rgba(220, 220, 230, ${fog.opacity})`;
-    ctx.beginPath();
-    ctx.arc(fog.x, fog.y, fog.r, 0, Math.PI * 2);
-    ctx.arc(fog.x + 20, fog.y - 5, fog.r * 0.8, 0, Math.PI * 2);
-    ctx.arc(fog.x - 20, fog.y + 5, fog.r * 0.8, 0, Math.PI * 2);
-    ctx.fill();
+// Tegn Skibladner (top-down, mer realistisk)
+function drawBoat() {
+  ctx.save();
+  ctx.translate(boat.x, boat.y);
+  ctx.rotate(boat.angle + Math.PI/2);
 
-    fog.x += fog.vx;
-    if (fog.x < -80) fog.x = W + 80;
-    if (fog.x > W + 80) fog.x = -80;
-  });
-}
-
-// Kollisjon
-function checkCollisions() {
-  // Tåke
-  fogBanks.forEach(fog => {
-    const dx = boat.x - fog.x;
-    const dy = boat.y - fog.y;
-    const dist = Math.sqrt(dx*dx + dy*dy);
-    if (dist < fog.r + 15 && !fog.hit) {
-      fog.hit = true;
-      fog.opacity = Math.max(0.1, fog.opacity - 0.3);
-      passengers = Math.max(0, passengers - 1);
-      fuel = Math.max(0, fuel - 5);
-      showCaptain('fogHit');
-      setTimeout(() => { fog.hit = false; }, 1500);
-    }
-  });
-
-  // By nådd
-  const target = CITIES[currentTargetIdx];
-  const dx = boat.x - target.x;
-  const dy = boat.y - target.y;
-  const dist = Math.sqrt(dx*dx + dy*dy);
-  if (dist < 35) {
-    // Bonus
-    score += 100 + passengers * 50;
-    const newPassengers = 3 + Math.floor(Math.random() * 4);
-    passengers += newPassengers;
-    fuel = Math.min(100, fuel + 30);
-    showCaptain('cityReached');
-    setTimeout(() => showCaptain('pickup'), 1500);
-
-    // Ny mål
-    let nextIdx;
-    do {
-      nextIdx = Math.floor(Math.random() * CITIES.length);
-    } while (nextIdx === currentTargetIdx);
-    currentTargetIdx = nextIdx;
-    document.getElementById('target').textContent = CITIES[currentTargetIdx].name;
+  // Blink hvis invulnerable
+  if (invulnerable > 0 && Math.floor(invulnerable / 4) % 2 === 0) {
+    ctx.globalAlpha = 0.4;
   }
+
+  // Skrog (hvit, oval, spiss foran)
+  ctx.fillStyle = '#f5f5f5';
+  ctx.beginPath();
+  ctx.moveTo(0, -22);                // bug (spiss foran)
+  ctx.quadraticCurveTo(-10, -15, -10, 0);
+  ctx.lineTo(-10, 15);               // akter venstre
+  ctx.lineTo(10, 15);                // akter høyre
+  ctx.lineTo(10, 0);
+  ctx.quadraticCurveTo(10, -15, 0, -22);
+  ctx.closePath();
+  ctx.fill();
+
+  // Skrogkant (mørk linje)
+  ctx.strokeStyle = '#2c2c2c';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // Rød stripe langs skroget
+  ctx.fillStyle = '#c0392b';
+  ctx.fillRect(-10, -2, 20, 2);
+
+  // Overbygning (hvitt rom)
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(-7, -8, 14, 14);
+  ctx.strokeRect(-7, -8, 14, 14);
+
+  // Vinduer
+  ctx.fillStyle = '#3498db';
+  ctx.fillRect(-5, -6, 3, 3);
+  ctx.fillRect(-1, -6, 3, 3);
+  ctx.fillRect(3, -6, 3, 3);
+  ctx.fillRect(-5, -1, 3, 3);
+  ctx.fillRect(3, -1, 3, 3);
+
+  // Skovlhjul på siden (to store)
+  ctx.fillStyle = '#5d4037';
+  ctx.fillRect(-13, -2, 3, 10);
+  ctx.fillRect(10, -2, 3, 10);
+  // Skovl-stripes
+  ctx.fillStyle = '#8b4513';
+  ctx.fillRect(-13, 0, 3, 2);
+  ctx.fillRect(-13, 4, 3, 2);
+  ctx.fillRect(10, 0, 3, 2);
+  ctx.fillRect(10, 4, 3, 2);
+
+  // Stor skorstein i midten
+  ctx.fillStyle = '#1a1a1a';
+  ctx.fillRect(-2, -14, 4, 10);
+  // Rødt bånd
+  ctx.fillStyle = '#c0392b';
+  ctx.fillRect(-2.5, -14, 5, 2);
+  // Topp
+  ctx.fillStyle = '#000';
+  ctx.fillRect(-3, -15, 6, 1);
+
+  // Røyk
+  if (gameRunning) {
+    ctx.fillStyle = 'rgba(220,220,220,0.7)';
+    ctx.beginPath();
+    ctx.arc(0 + Math.sin(gameTime*0.1)*1, -18, 3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(200,200,200,0.5)';
+    ctx.beginPath();
+    ctx.arc(1, -22 + Math.cos(gameTime*0.08)*1, 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(180,180,180,0.3)';
+    ctx.beginPath();
+    ctx.arc(-1, -28, 5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Flagg bak
+  ctx.fillStyle = '#e74c3c';
+  ctx.fillRect(0, 15, 1, 8);
+  ctx.fillStyle = '#2c3e50';
+  ctx.fillRect(0, 15, 8, 4);
+  ctx.fillStyle = '#c0392b';
+  ctx.fillRect(0, 17, 8, 1);
+
+  ctx.restore();
 }
 
-// Vis kaptein-replikk
+// Tegn Mjøs-Gjedda
+function drawPike() {
+  ctx.save();
+  ctx.translate(pike.x, pike.y);
+  ctx.rotate(pike.angle);
+
+  const wave = Math.sin(gameTime * 0.2) * 0.3;
+
+  // Kropp (lang grønn gjedde)
+  ctx.fillStyle = '#3d5a3d';
+  ctx.beginPath();
+  ctx.moveTo(-35, 0);  // hale
+  ctx.quadraticCurveTo(-25, -10 + wave*2, -10, -8);
+  ctx.quadraticCurveTo(10, -10, 28, -5);   // kropp topp
+  ctx.quadraticCurveTo(35, 0, 28, 5);      // snute
+  ctx.quadraticCurveTo(10, 10, -10, 8);    // kropp bunn
+  ctx.quadraticCurveTo(-25, 10 - wave*2, -35, 0);
+  ctx.closePath();
+  ctx.fill();
+
+  // Lys buk
+  ctx.fillStyle = '#6a8f6a';
+  ctx.beginPath();
+  ctx.moveTo(-30, 2);
+  ctx.quadraticCurveTo(-10, 6, 20, 4);
+  ctx.quadraticCurveTo(-10, 8, -30, 4);
+  ctx.closePath();
+  ctx.fill();
+
+  // Mørke flekker
+  ctx.fillStyle = '#2a4a2a';
+  ctx.beginPath();
+  ctx.arc(-10, -3, 2, 0, Math.PI * 2);
+  ctx.arc(0, -5, 2, 0, Math.PI * 2);
+  ctx.arc(10, -3, 2, 0, Math.PI * 2);
+  ctx.arc(-5, 2, 1.5, 0, Math.PI * 2);
+  ctx.arc(5, 2, 1.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Hale (bevegelig)
+  ctx.fillStyle = '#2a4a2a';
+  ctx.beginPath();
+  ctx.moveTo(-30, 0);
+  ctx.lineTo(-45, -10 + wave*5);
+  ctx.lineTo(-40, 0);
+  ctx.lineTo(-45, 10 + wave*5);
+  ctx.closePath();
+  ctx.fill();
+
+  // Ryggfinne
+  ctx.fillStyle = '#2a4a2a';
+  ctx.beginPath();
+  ctx.moveTo(-5, -8);
+  ctx.lineTo(0, -16);
+  ctx.lineTo(8, -8);
+  ctx.closePath();
+  ctx.fill();
+
+  // Øye (rødt, truende)
+  ctx.fillStyle = '#fff';
+  ctx.beginPath();
+  ctx.arc(20, -2, 2.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#cc0000';
+  ctx.beginPath();
+  ctx.arc(21, -2, 1.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Tenner i åpent gap
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(25, 2, 1, 2);
+  ctx.fillRect(27, 2, 1, 3);
+  ctx.fillRect(29, 2, 1, 2);
+
+  ctx.restore();
+}
+
+// Kaptein-replikk
 function showCaptain(type) {
   const quotes = CAPTAIN_QUOTES[type] || CAPTAIN_QUOTES.random;
   const quote = quotes[Math.floor(Math.random() * quotes.length)];
@@ -645,31 +771,28 @@ function showCaptain(type) {
   lastQuoteTime = gameTime;
 }
 
-// Game loop
+// Update game state
 function update() {
   if (!gameRunning) return;
-
   gameTime++;
 
   // Input
-  const turnSpeed = 0.04;
-  const accel = 0.1;
-  const maxSpeed = 3;
-  const friction = 0.97;
+  const turnSpeed = 0.05;
+  const accel = 0.15;
+  const maxSpeed = 2.8;
+  const friction = 0.95;
 
   if (keys['ArrowLeft'] || keys['a']) boat.angle -= turnSpeed;
   if (keys['ArrowRight'] || keys['d']) boat.angle += turnSpeed;
   if (keys['ArrowUp'] || keys['w']) {
-    boat.vx += Math.cos(boat.angle - Math.PI/2) * accel;
-    boat.vy += Math.sin(boat.angle - Math.PI/2) * accel;
-    fuel -= 0.08;
+    boat.vx += Math.cos(boat.angle) * accel;
+    boat.vy += Math.sin(boat.angle) * accel;
   }
   if (keys['ArrowDown'] || keys['s']) {
-    boat.vx *= 0.9;
-    boat.vy *= 0.9;
+    boat.vx *= 0.88;
+    boat.vy *= 0.88;
   }
 
-  // Begrens fart
   const speed = Math.sqrt(boat.vx*boat.vx + boat.vy*boat.vy);
   if (speed > maxSpeed) {
     boat.vx = (boat.vx / speed) * maxSpeed;
@@ -678,46 +801,132 @@ function update() {
 
   boat.vx *= friction;
   boat.vy *= friction;
-  boat.x += boat.vx;
-  boat.y += boat.vy;
 
-  // Grenser
-  if (boat.x < 20) { boat.x = 20; boat.vx = 0; }
-  if (boat.x > W - 20) { boat.x = W - 20; boat.vx = 0; }
-  if (boat.y < 200) { boat.y = 200; boat.vy = 0; }
-  if (boat.y > H - 20) { boat.y = H - 20; boat.vy = 0; }
+  // Prøv å flytte
+  const newX = boat.x + boat.vx;
+  const newY = boat.y + boat.vy;
 
-  // Passiv drivstoff-bruk
-  fuel -= 0.01;
+  if (isInLake(newX, newY)) {
+    boat.x = newX;
+    boat.y = newY;
+  } else {
+    // Prøv bare x eller y
+    if (isInLake(newX, boat.y)) boat.x = newX;
+    if (isInLake(boat.x, newY)) boat.y = newY;
+    boat.vx *= 0.3;
+    boat.vy *= 0.3;
+  }
 
-  checkCollisions();
+  // Båt lager ringer
+  if (speed > 0.5 && gameTime % 12 === 0) {
+    ripples.push({ x: boat.x, y: boat.y, radius: 5, opacity: 0.5 });
+  }
+
+  // Invulnerability
+  if (invulnerable > 0) invulnerable--;
+
+  // Oppdater Mjøs-Gjedda (jakter båten)
+  const dx = boat.x - pike.x;
+  const dy = boat.y - pike.y;
+  const dist = Math.sqrt(dx*dx + dy*dy);
+  pike.targetAngle = Math.atan2(dy, dx);
+
+  // Glatt rotasjon
+  let angleDiff = pike.targetAngle - pike.angle;
+  while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+  while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+  pike.angle += angleDiff * 0.03;
+
+  // Gjedda følger sakte etter
+  const pikeSpeed = pike.speed + Math.min(1, gameTime / 3000);
+  const newPikeX = pike.x + Math.cos(pike.angle) * pikeSpeed;
+  const newPikeY = pike.y + Math.sin(pike.angle) * pikeSpeed;
+
+  if (isInLake(newPikeX, newPikeY)) {
+    pike.x = newPikeX;
+    pike.y = newPikeY;
+  } else {
+    // Velg ny tilfeldig retning hvis ved kanten
+    pike.angle += (Math.random() - 0.5) * 1.5;
+  }
+
+  // Gjedda lager ringer
+  if (gameTime % 15 === 0) {
+    ripples.push({ x: pike.x - Math.cos(pike.angle) * 30, y: pike.y - Math.sin(pike.angle) * 30, radius: 6, opacity: 0.4 });
+  }
+
+  // Oppdater ringer
+  ripples.forEach(r => {
+    r.radius += 0.5;
+    r.opacity -= 0.01;
+  });
+  ripples = ripples.filter(r => r.opacity > 0);
+
+  // Advarsel når gjedda er nær
+  if (dist < 120 && dist > 110 && gameTime - lastQuoteTime > 200) {
+    showCaptain('pikeWarning');
+  }
+
+  // Kollisjon med gjedda
+  if (dist < 35 && invulnerable === 0) {
+    lives--;
+    invulnerable = 90;
+    passengers = Math.max(0, passengers - 2);
+    showCaptain('pikeHit');
+
+    // Dytt båten vekk
+    const angle = Math.atan2(boat.y - pike.y, boat.x - pike.x);
+    boat.vx = Math.cos(angle) * 8;
+    boat.vy = Math.sin(angle) * 8;
+
+    if (lives <= 0) {
+      endGame('💀 Mjøs-Gjedda vant!', 'Skibladner ble slukt av den fryktede gjedda. Du samlet ' + (score + passengers * 10) + ' poeng.');
+      return;
+    }
+  }
+
+  // By nådd?
+  const target = CITIES[currentTargetIdx];
+  const dCity = Math.sqrt((boat.x - target.x)**2 + (boat.y - target.y)**2);
+  if (dCity < 40 && !target.visited) {
+    target.visited = true;
+    score += 200;
+    passengers += 4 + Math.floor(Math.random() * 3);
+    showCaptain('cityReached');
+
+    // Sjekk om alle byer er besøkt
+    const allVisited = CITIES.every(c => c.visited);
+    if (allVisited) {
+      score += 500;
+      setTimeout(() => {
+        showCaptain('allCitiesVisited');
+        // Reset
+        CITIES.forEach(c => c.visited = false);
+        currentTargetIdx = Math.floor(Math.random() * 3);
+      }, 1500);
+    } else {
+      // Velg neste ubesøkte by
+      const unvisited = CITIES.map((c, i) => ({c, i})).filter(x => !x.c.visited);
+      currentTargetIdx = unvisited[Math.floor(Math.random() * unvisited.length)].i;
+    }
+    document.getElementById('target').textContent = CITIES[currentTargetIdx].name;
+  }
 
   // Tilfeldige kommentarer
-  if (gameTime - lastQuoteTime > 400 && Math.random() < 0.01) {
+  if (gameTime - lastQuoteTime > 500 && Math.random() < 0.008) {
     showCaptain('random');
-  }
-
-  // Lavt drivstoff-varsling
-  if (fuel < 20 && fuel > 19.9) {
-    showCaptain('lowFuel');
-  }
-
-  // Game over
-  if (fuel <= 0) {
-    endGame('Slutt på drivstoff!', 'Skibladner dreiv i land ved Helgøya. Du samlet ' + score + ' poeng!');
   }
 
   // HUD
   document.getElementById('passengers').textContent = passengers;
-  document.getElementById('fuel').textContent = Math.max(0, Math.round(fuel)) + '%';
-  document.getElementById('score').textContent = score + Math.floor(gameTime / 60);
+  document.getElementById('score').textContent = score + Math.floor(gameTime / 30) + passengers * 10;
+  document.getElementById('lives').textContent = '❤'.repeat(lives);
 }
 
 function render() {
-  drawBackground();
-  drawClouds();
+  drawLandscape();
   drawCities();
-  drawFog();
+  drawPike();
   drawBoat();
 }
 
@@ -727,39 +936,17 @@ function loop() {
   requestAnimationFrame(loop);
 }
 
-// Start
 function startGame() {
-  boat = { x: 120, y: 400, vx: 0, vy: 0, angle: 0 };
+  boat = { x: 450, y: 300, vx: 0, vy: 0, angle: -Math.PI/2 };
+  pike = { x: 300, y: 480, angle: 0, targetAngle: 0, speed: 1.2 };
   passengers = 0;
-  fuel = 100;
   score = 0;
+  lives = 3;
   currentTargetIdx = 1;
   gameTime = 0;
-
-  // Lag tåkebanker
-  fogBanks = [];
-  for (let i = 0; i < 4; i++) {
-    fogBanks.push({
-      x: 150 + Math.random() * 500,
-      y: 230 + Math.random() * 200,
-      r: 30 + Math.random() * 20,
-      vx: (Math.random() - 0.5) * 0.5,
-      opacity: 0.6,
-      hit: false
-    });
-  }
-
-  // Lag skyer
-  clouds = [];
-  for (let i = 0; i < 6; i++) {
-    clouds.push({
-      x: Math.random() * W,
-      y: 30 + Math.random() * 60,
-      r: 15 + Math.random() * 20,
-      vx: 0.2 + Math.random() * 0.3,
-      opacity: 0.4 + Math.random() * 0.3
-    });
-  }
+  invulnerable = 60;
+  ripples = [];
+  CITIES.forEach(c => c.visited = false);
 
   document.getElementById('target').textContent = CITIES[currentTargetIdx].name;
   document.getElementById('start-overlay').classList.add('hidden');
@@ -770,14 +957,13 @@ function startGame() {
 
 function endGame(title, msg) {
   gameRunning = false;
-  const finalScore = score + Math.floor(gameTime / 60);
+  const finalScore = score + Math.floor(gameTime / 30) + passengers * 10;
   document.getElementById('end-title').textContent = title;
   document.getElementById('end-message').textContent = msg;
   document.getElementById('final-score').textContent = finalScore + ' poeng';
   document.getElementById('end-overlay').classList.remove('hidden');
 }
 
-// Highscores
 function loadHighscores() {
   const scores = JSON.parse(localStorage.getItem('skibladner_scores') || '[]');
   const list = document.getElementById('highscore-list');
@@ -791,7 +977,7 @@ function loadHighscores() {
 }
 
 function saveAndRestart() {
-  const finalScore = score + Math.floor(gameTime / 60);
+  const finalScore = score + Math.floor(gameTime / 30) + passengers * 10;
   const name = prompt('Gratulerer, kaptein! Skriv navnet ditt:', 'Kaptein') || 'Anonym';
   const scores = JSON.parse(localStorage.getItem('skibladner_scores') || '[]');
   scores.push({ name: name.substring(0, 20), score: finalScore, date: new Date().toISOString() });
@@ -802,8 +988,8 @@ function saveAndRestart() {
 }
 
 function shareScore() {
-  const finalScore = score + Math.floor(gameTime / 60);
-  const text = `Jeg fikk ${finalScore} poeng i Skibladner 2026! ⛴️ Klarer du bedre?`;
+  const finalScore = score + Math.floor(gameTime / 30) + passengers * 10;
+  const text = `Jeg fikk ${finalScore} poeng i Skibladner 2026! ⛴️ Unngikk Mjøs-Gjedda og besøkte alle tre byene. Klarer du bedre?`;
   const url = window.location.href;
   if (navigator.share) {
     navigator.share({ title: 'Skibladner 2026', text, url });
@@ -812,19 +998,20 @@ function shareScore() {
   }
 }
 
-// Tastatur
-window.addEventListener('keydown', e => { keys[e.key] = true; });
+window.addEventListener('keydown', e => { keys[e.key] = true; if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)) e.preventDefault(); });
 window.addEventListener('keyup', e => { keys[e.key] = false; });
 
 // Mobil-kontroller
-document.getElementById('btn-left').addEventListener('touchstart', e => { e.preventDefault(); keys['ArrowLeft'] = true; });
-document.getElementById('btn-left').addEventListener('touchend', e => { e.preventDefault(); keys['ArrowLeft'] = false; });
-document.getElementById('btn-right').addEventListener('touchstart', e => { e.preventDefault(); keys['ArrowRight'] = true; });
-document.getElementById('btn-right').addEventListener('touchend', e => { e.preventDefault(); keys['ArrowRight'] = false; });
-document.getElementById('btn-up').addEventListener('touchstart', e => { e.preventDefault(); keys['ArrowUp'] = true; });
-document.getElementById('btn-up').addEventListener('touchend', e => { e.preventDefault(); keys['ArrowUp'] = false; });
+function bindMobile(id, key) {
+  const btn = document.getElementById(id);
+  ['touchstart', 'mousedown'].forEach(ev => btn.addEventListener(ev, e => { e.preventDefault(); keys[key] = true; }));
+  ['touchend', 'touchcancel', 'mouseup', 'mouseleave'].forEach(ev => btn.addEventListener(ev, e => { e.preventDefault(); keys[key] = false; }));
+}
+bindMobile('btn-left', 'ArrowLeft');
+bindMobile('btn-right', 'ArrowRight');
+bindMobile('btn-up', 'ArrowUp');
+bindMobile('btn-down', 'ArrowDown');
 
-// Start loop
 loadHighscores();
 loop();
 </script>
