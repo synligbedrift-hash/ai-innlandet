@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI vs Byråkraten – Redde Innlandet fra papirmølla | AI Innlandet</title>
+<meta name="description" content="Send AI-agenter for å behandle søknader før byråkratiet tar over. Hvor lenge holder du Innlandet flytende?">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    background: linear-gradient(180deg, #0a1628 0%, #1a3a5c 100%);
+    color: #fff;
+    min-height: 100vh;
+  }
+  .top-bar {
+    background: rgba(10, 22, 40, 0.9);
+    padding: 14px 24px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    backdrop-filter: blur(10px);
+  }
+  .top-bar a { color: #00d4ff; text-decoration: none; font-size: 0.9em; }
+  .top-bar .brand { font-weight: 800; letter-spacing: 1px; }
+  .container { max-width: 900px; margin: 0 auto; padding: 24px; text-align: center; }
+  h1 {
+    font-size: clamp(1.8em, 4vw, 2.6em);
+    margin-bottom: 8px;
+    background: linear-gradient(90deg, #00d4ff, #ff00ea);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 800;
+  }
+  .tagline { opacity: 0.85; margin-bottom: 20px; font-size: 1em; max-width: 680px; margin-left:auto; margin-right:auto; line-height: 1.6; }
+  #game-wrap {
+    position: relative;
+    max-width: 800px;
+    margin: 0 auto;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    border: 2px solid rgba(255,255,255,0.15);
+  }
+  canvas { display: block; width: 100%; cursor: pointer; }
+  .hud {
+    position: absolute;
+    top: 12px; left: 12px; right: 12px;
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    pointer-events: none;
+    flex-wrap: wrap;
+  }
+  .hud-item {
+    background: rgba(0,0,0,0.7);
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 0.9em;
+    border: 1px solid rgba(0,212,255,0.3);
+  }
+  .meter-wrap {
+    position: absolute;
+    top: 56px; left: 12px; right: 12px;
+    height: 14px;
+    background: rgba(0,0,0,0.6);
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.2);
+  }
+  .meter-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #00ff88, #ffcc00 60%, #ff3344);
+    transition: width 0.2s;
+  }
+  .overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(10,22,40,0.92);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 30px;
+    backdrop-filter: blur(6px);
+  }
+  .overlay.hidden { display: none; }
+  .overlay h2 {
+    font-size: 2em;
+    margin-bottom: 12px;
+    background: linear-gradient(90deg, #00d4ff, #ff00ea);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .overlay p { opacity: 0.9; margin-bottom: 18px; max-width: 480px; line-height: 1.6; }
+  .btn {
+    background: linear-gradient(135deg, #00d4ff, #ff00ea);
+    color: #fff;
+    border: none;
+    padding: 14px 32px;
+    border-radius: 999px;
+    font-weight: 800;
+    font-size: 1em;
+    cursor: pointer;
+    box-shadow: 0 8px 24px rgba(0,212,255,0.3);
+  }
+  .btn:hover { transform: translateY(-2px); }
+  .footer-cta {
+    margin-top: 30px;
+    padding: 20px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  .footer-cta a { color: #00d4ff; font-weight: 700; }
+</style>
+</head>
+<body>
+  <div class="top-bar">
+    <a href="../index.html" class="brand">← AI INNLANDET</a>
+    <a href="../index.html#moro">Flere spill</a>
+  </div>
+
+  <div class="container">
+    <h1>AI vs Byråkraten</h1>
+    <p class="tagline">Søknadene hoper seg opp på rådhuset i Innlandet. Send AI-agentene dine for å behandle dem før byråkrati-måleren spruter over. Klikk på en søknad for å sende en agent.</p>
+
+    <div id="game-wrap">
+      <canvas id="game" width="800" height="560"></canvas>
+
+      <div class="hud">
+        <div class="hud-item">Poeng: <span id="score">0</span></div>
+        <div class="hud-item">Agenter: <span id="agents">3</span></div>
+        <div class="hud-item">Rekord: <span id="best">0</span></div>
+      </div>
+      <div class="meter-wrap"><div class="meter-fill" id="meter"></div></div>
+
+      <div class="overlay" id="start">
+        <h2>Klar til å redde Innlandet?</h2>
+        <p>Klikk på søknadene før de går ut på dato. Røde haster mest. Hver 100. poeng får du en ny AI-agent. ☕ kaffe = pause, ⚡ turbo = raskere agenter, 📜 ny forskrift = uff.</p>
+        <button class="btn" onclick="startGame()">START SPILLET</button>
+      </div>
+
+      <div class="overlay hidden" id="end">
+        <h2 id="end-title">Byråkratiet vant 😩</h2>
+        <p id="end-msg"></p>
+        <button class="btn" onclick="startGame()">SPILL IGJEN</button>
+      </div>
+    </div>
+
+    <div class="footer-cta">
+      <p>Vil du la AI behandle <em>dine</em> søknader, e-poster og kundehenvendelser i virkeligheten?<br>
+      <a href="../index.html#kontakt">Få gratis AI-kartlegging av bedriften din →</a></p>
+    </div>
+  </div>
+
+<script>
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+
+const scoreEl = document.getElementById('score');
+const agentsEl = document.getElementById('agents');
+const bestEl = document.getElementById('best');
+const meterEl = document.getElementById('meter');
+const startOv = document.getElementById('start');
+const endOv = document.getElementById('end');
+const endTitle = document.getElementById('end-title');
+const endMsg = document.getElementById('end-msg');
+
+const COLS = 4, ROWS = 3;
+const cellW = W / COLS;
+const cellH = (H - 80) / ROWS;
+const topPad = 80;
+
+let state = 'idle';
+let score, maxAgents, agentsBusy, bureaucracy, papers, agents, powerups, lastSpawn, spawnInterval, paused, pauseTimer, turboTimer, slowTimer, t;
+let best = +(localStorage.getItem('byrakraten_best') || 0);
+bestEl.textContent = best;
+
+function startGame() {
+  score = 0;
+  maxAgents = 3;
+  agentsBusy = 0;
+  bureaucracy = 0;
+  papers = [];
+  agents = [];
+  powerups = [];
+  lastSpawn = 0;
+  spawnInterval = 1400;
+  paused = false;
+  pauseTimer = 0;
+  turboTimer = 0;
+  slowTimer = 0;
+  t = 0;
+  state = 'play';
+  startOv.classList.add('hidden');
+  endOv.classList.add('hidden');
+  updateHUD();
+}
+
+function updateHUD() {
+  scoreEl.textContent = score;
+  agentsEl.textContent = (maxAgents - agentsBusy) + '/' + maxAgents;
+  meterEl.style.width = Math.min(100, bureaucracy) + '%';
+}
+
+function spawnPaper() {
+  // pick random empty cell
+  const empty = [];
+  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+    if (!papers.some(p => p.r === r && p.c === c && !p.done)) empty.push([r, c]);
+  }
+  if (empty.length === 0) return;
+  const [r, c] = empty[Math.floor(Math.random() * empty.length)];
+  const life = 5500 - Math.min(2500, t / 20);
+  papers.push({ r, c, life, maxLife: life, done: false, assigned: false });
+}
+
+function spawnPowerup() {
+  const types = ['coffee', 'turbo', 'forskrift'];
+  const type = types[Math.floor(Math.random() * types.length)];
+  powerups.push({
+    x: 60 + Math.random() * (W - 120),
+    y: topPad + 40 + Math.random() * (H - topPad - 80),
+    type, life: 4500
+  });
+}
+
+function paperPos(p) {
+  return {
+    x: p.c * cellW + cellW / 2,
+    y: topPad + p.r * cellH + cellH / 2
+  };
+}
+
+canvas.addEventListener('click', (e) => {
+  if (state !== 'play') return;
+  const rect = canvas.getBoundingClientRect();
+  const x = (e.clientX - rect.left) * (W / rect.width);
+  const y = (e.clientY - rect.top) * (H / rect.height);
+
+  // powerup click first
+  for (let i = powerups.length - 1; i >= 0; i--) {
+    const pu = powerups[i];
+    if (Math.hypot(pu.x - x, pu.y - y) < 28) {
+      activatePower(pu.type);
+      powerups.splice(i, 1);
+      return;
+    }
+  }
+
+  // paper click
+  for (const p of papers) {
+    if (p.done || p.assigned) continue;
+    const pos = paperPos(p);
+    if (Math.abs(pos.x - x) < 50 && Math.abs(pos.y - y) < 50) {
+      if (agentsBusy >= maxAgents) return;
+      p.assigned = true;
+      agentsBusy++;
+      agents.push({
+        x: W / 2, y: H + 20,
+        tx: pos.x, ty: pos.y,
+        target: p, returning: false, progress: 0
+      });
+      updateHUD();
+      return;
+    }
+  }
+});
+
+function activatePower(type) {
+  if (type === 'coffee') { paused = true; pauseTimer = 3000; }
+  if (type === 'turbo') { turboTimer = 10000; }
+  if (type === 'forskrift') { slowTimer = 8000; bureaucracy = Math.min(100, bureaucracy + 8); }
+}
+
+function update(dt) {
+  if (state !== 'play') return;
+  t += dt;
+
+  if (pauseTimer > 0) { pauseTimer -= dt; if (pauseTimer <= 0) paused = false; }
+  if (turboTimer > 0) turboTimer -= dt;
+  if (slowTimer > 0) slowTimer -= dt;
+
+  if (!paused) {
+    lastSpawn += dt;
+    const interval = spawnInterval * (slowTimer > 0 ? 0.7 : 1);
+    if (lastSpawn > interval) {
+      spawnPaper();
+      lastSpawn = 0;
+      spawnInterval = Math.max(550, spawnInterval - 12);
+    }
+
+    // powerup spawn
+    if (Math.random() < 0.0012) spawnPowerup();
+
+    // age papers
+    for (const p of papers) {
+      if (p.done) continue;
+      if (!p.assigned) {
+        p.life -= dt;
+        if (p.life <= 0) {
+          p.done = true;
+          bureaucracy += 18;
+        }
+      }
+    }
+  }
+
+  // powerups age
+  for (const pu of powerups) pu.life -= dt;
+  powerups = powerups.filter(pu => pu.life > 0);
+
+  // agents move
+  const speed = (turboTimer > 0 ? 0.9 : 0.45) * dt;
+  for (const a of agents) {
+    if (!a.returning) {
+      const dx = a.tx - a.x, dy = a.ty - a.y;
+      const d = Math.hypot(dx, dy);
+      if (d < speed) {
+        a.x = a.tx; a.y = a.ty;
+        a.target.done = true;
+        score += 10;
+        if (score > 0 && score % 100 === 0 && maxAgents < 8) maxAgents++;
+        a.returning = true;
+      } else {
+        a.x += dx / d * speed;
+        a.y += dy / d * speed;
+      }
+    } else {
+      a.y += speed * 1.2;
+      if (a.y > H + 30) {
+        agentsBusy--;
+      }
+    }
+  }
+  agents = agents.filter(a => !(a.returning && a.y > H + 30));
+  papers = papers.filter(p => !p.done || p.assigned);
+  papers = papers.filter(p => !p.done);
+
+  updateHUD();
+
+  if (bureaucracy >= 100) endGame();
+}
+
+function endGame() {
+  state = 'end';
+  if (score > best) {
+    best = score;
+    localStorage.setItem('byrakraten_best', best);
+    bestEl.textContent = best;
+    endTitle.textContent = '🏆 NY REKORD!';
+  } else {
+    endTitle.textContent = 'Byråkratiet vant 😩';
+  }
+  endMsg.textContent = `Du behandlet ${score} søknader før papirmølla tok over. Tenk hva ekte AI-agenter kunne gjort for bedriften din.`;
+  endOv.classList.remove('hidden');
+}
+
+function drawDesk() {
+  // background gradient
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, '#1a2540');
+  g.addColorStop(1, '#0f1828');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, W, H);
+
+  // grid
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+  ctx.lineWidth = 1;
+  for (let r = 0; r <= ROWS; r++) {
+    ctx.beginPath();
+    ctx.moveTo(0, topPad + r * cellH);
+    ctx.lineTo(W, topPad + r * cellH);
+    ctx.stroke();
+  }
+  for (let c = 0; c <= COLS; c++) {
+    ctx.beginPath();
+    ctx.moveTo(c * cellW, topPad);
+    ctx.lineTo(c * cellW, H);
+    ctx.stroke();
+  }
+}
+
+function drawPaper(p) {
+  const pos = paperPos(p);
+  const t = p.life / p.maxLife;
+  const w = 70, h = 80;
+
+  ctx.save();
+  ctx.translate(pos.x, pos.y);
+  // shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.4)';
+  ctx.fillRect(-w/2 + 3, -h/2 + 4, w, h);
+  // paper
+  ctx.fillStyle = p.assigned ? '#88ccff' : '#fefefe';
+  ctx.fillRect(-w/2, -h/2, w, h);
+  // lines
+  ctx.strokeStyle = '#bbb';
+  ctx.lineWidth = 1;
+  for (let i = 0; i < 5; i++) {
+    ctx.beginPath();
+    ctx.moveTo(-w/2 + 8, -h/2 + 18 + i * 10);
+    ctx.lineTo(w/2 - 8, -h/2 + 18 + i * 10);
+    ctx.stroke();
+  }
+  // stamp
+  ctx.strokeStyle = '#c33';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(-15, h/2 - 22, 30, 14);
+  ctx.fillStyle = '#c33';
+  ctx.font = 'bold 8px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('SØKNAD', 0, h/2 - 12);
+
+  // life bar
+  const barW = w;
+  ctx.fillStyle = 'rgba(0,0,0,0.4)';
+  ctx.fillRect(-barW/2, -h/2 - 10, barW, 5);
+  const col = t > 0.5 ? '#00ff88' : t > 0.25 ? '#ffcc00' : '#ff3344';
+  ctx.fillStyle = col;
+  ctx.fillRect(-barW/2, -h/2 - 10, barW * t, 5);
+  ctx.restore();
+}
+
+function drawAgent(a) {
+  ctx.save();
+  ctx.translate(a.x, a.y);
+  // glow
+  const grd = ctx.createRadialGradient(0, 0, 0, 0, 0, 24);
+  grd.addColorStop(0, 'rgba(0,212,255,0.6)');
+  grd.addColorStop(1, 'rgba(0,212,255,0)');
+  ctx.fillStyle = grd;
+  ctx.fillRect(-24, -24, 48, 48);
+  // body
+  ctx.fillStyle = '#00d4ff';
+  ctx.beginPath();
+  ctx.arc(0, 0, 11, 0, Math.PI * 2);
+  ctx.fill();
+  // eyes
+  ctx.fillStyle = '#0a1628';
+  ctx.fillRect(-5, -3, 3, 3);
+  ctx.fillRect(2, -3, 3, 3);
+  // antenna
+  ctx.strokeStyle = '#ff00ea';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(0, -11);
+  ctx.lineTo(0, -16);
+  ctx.stroke();
+  ctx.fillStyle = '#ff00ea';
+  ctx.beginPath();
+  ctx.arc(0, -17, 2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawPowerup(pu) {
+  ctx.save();
+  ctx.translate(pu.x, pu.y);
+  const pulse = 1 + Math.sin(t / 100) * 0.1;
+  ctx.scale(pulse, pulse);
+  let emoji = pu.type === 'coffee' ? '☕' : pu.type === 'turbo' ? '⚡' : '📜';
+  ctx.fillStyle = 'rgba(255,255,255,0.95)';
+  ctx.beginPath();
+  ctx.arc(0, 0, 24, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.font = '28px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(emoji, 0, 2);
+  ctx.restore();
+}
+
+function drawStatus() {
+  let y = topPad - 8;
+  ctx.font = 'bold 13px sans-serif';
+  ctx.textAlign = 'left';
+  if (paused) { ctx.fillStyle = '#00ff88'; ctx.fillText('☕ KAFFEPAUSE', 14, y); }
+  if (turboTimer > 0) { ctx.fillStyle = '#ffcc00'; ctx.fillText('⚡ TURBO', 130, y); }
+  if (slowTimer > 0) { ctx.fillStyle = '#ff6688'; ctx.fillText('📜 NY FORSKRIFT', 220, y); }
+}
+
+let lastT = 0;
+function loop(now) {
+  const dt = Math.min(50, now - lastT);
+  lastT = now;
+  drawDesk();
+  if (state === 'play') {
+    update(dt);
+    for (const p of papers) drawPaper(p);
+    for (const pu of powerups) drawPowerup(pu);
+    for (const a of agents) drawAgent(a);
+    drawStatus();
+  }
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
