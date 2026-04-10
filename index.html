@@ -891,5 +891,228 @@
   </div>
 </footer>
 
+<!-- CHATBOT -->
+<style>
+  .chatbot-toggle {
+    position: fixed; bottom: 28px; right: 28px; z-index: 999;
+    width: 62px; height: 62px; border-radius: 50%; border: none; cursor: pointer;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    box-shadow: 0 6px 24px rgba(0,212,255,0.4);
+    display: flex; align-items: center; justify-content: center;
+    transition: transform 0.2s, box-shadow 0.2s;
+    font-size: 1.7em; color: #fff;
+  }
+  .chatbot-toggle:hover { transform: scale(1.08); box-shadow: 0 8px 32px rgba(0,212,255,0.55); }
+  .chatbot-toggle .dot {
+    position: absolute; top: 8px; right: 6px;
+    width: 14px; height: 14px; border-radius: 50%;
+    background: #2ecc71; border: 2px solid #fff;
+    animation: pulse-dot 2s infinite;
+  }
+  @keyframes pulse-dot { 0%,100%{transform:scale(1)} 50%{transform:scale(1.3)} }
+  .chatbot-window {
+    position: fixed; bottom: 100px; right: 28px; z-index: 998;
+    width: 370px; max-height: 520px; border-radius: 20px;
+    background: #fff; box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    display: none; flex-direction: column; overflow: hidden;
+    border: 1px solid rgba(0,0,0,0.08);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  }
+  .chatbot-window.open { display: flex; animation: chatSlideUp 0.25s ease-out; }
+  @keyframes chatSlideUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+  .chat-header {
+    background: linear-gradient(135deg, var(--dark), var(--dark-2));
+    color: #fff; padding: 18px 20px; display: flex; align-items: center; gap: 12px;
+  }
+  .chat-header .avatar {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    display: flex; align-items: center; justify-content: center; font-size: 1.2em; flex-shrink: 0;
+  }
+  .chat-header .info h4 { font-size: 0.95em; margin-bottom: 2px; }
+  .chat-header .info span { font-size: 0.78em; opacity: 0.7; }
+  .chat-header .close-chat {
+    margin-left: auto; background: none; border: none; color: rgba(255,255,255,0.6);
+    font-size: 1.5em; cursor: pointer; padding: 0 4px; line-height: 1;
+  }
+  .chat-header .close-chat:hover { color: #fff; }
+  .chat-messages {
+    flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px;
+    max-height: 320px; background: #f8f9fc;
+  }
+  .chat-msg { max-width: 85%; padding: 12px 16px; border-radius: 16px; font-size: 0.9em; line-height: 1.5; }
+  .chat-msg.bot {
+    background: #fff; color: #1a1a2e; align-self: flex-start;
+    border: 1px solid #eef0f7; border-bottom-left-radius: 4px;
+  }
+  .chat-msg.user {
+    background: linear-gradient(135deg, var(--dark), var(--dark-2));
+    color: #fff; align-self: flex-end; border-bottom-right-radius: 4px;
+  }
+  .chat-msg.typing .dots { display: inline-flex; gap: 4px; }
+  .chat-msg.typing .dots span {
+    width: 7px; height: 7px; border-radius: 50%; background: #aaa;
+    animation: blink 1.4s infinite both;
+  }
+  .chat-msg.typing .dots span:nth-child(2) { animation-delay: 0.2s; }
+  .chat-msg.typing .dots span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes blink { 0%,80%,100%{opacity:0.3} 40%{opacity:1} }
+  .chat-options { padding: 12px 16px 16px; display: flex; flex-wrap: wrap; gap: 8px; background: #f8f9fc; border-top: 1px solid #eef0f7; }
+  .chat-opt {
+    background: #fff; border: 1px solid #dde0ea; border-radius: 20px;
+    padding: 8px 16px; font-size: 0.82em; cursor: pointer; color: var(--dark-2);
+    transition: all 0.15s; font-family: inherit;
+  }
+  .chat-opt:hover { background: var(--dark); color: #fff; border-color: var(--dark); }
+  @media (max-width: 480px) {
+    .chatbot-window { right: 8px; left: 8px; width: auto; bottom: 90px; max-height: 70vh; }
+  }
+</style>
+
+<button class="chatbot-toggle" id="chatToggle" aria-label="Åpne chat">
+  🤖<span class="dot"></span>
+</button>
+
+<div class="chatbot-window" id="chatWindow">
+  <div class="chat-header">
+    <div class="avatar">🤖</div>
+    <div class="info">
+      <h4>AI-assistenten</h4>
+      <span>AI Innlandet</span>
+    </div>
+    <button class="close-chat" id="chatClose" aria-label="Lukk chat">&times;</button>
+  </div>
+  <div class="chat-messages" id="chatMessages">
+    <div class="chat-msg bot">Hei! 👋 Jeg er AI-assistenten til AI Innlandet. Hva lurer du på?</div>
+  </div>
+  <div class="chat-options" id="chatOptions"></div>
+</div>
+
+<script>
+(function(){
+  const toggle = document.getElementById('chatToggle');
+  const win = document.getElementById('chatWindow');
+  const closeBtn = document.getElementById('chatClose');
+  const msgBox = document.getElementById('chatMessages');
+  const optBox = document.getElementById('chatOptions');
+
+  const tree = {
+    root: {
+      options: [
+        { label: 'Hva tilbyr dere?', next: 'tjenester' },
+        { label: 'Hvem er dere?', next: 'omoss' },
+        { label: 'Hva koster det?', next: 'pris' },
+        { label: 'Jeg vil ta kontakt', next: 'kontakt' }
+      ]
+    },
+    tjenester: {
+      msg: 'Vi hjelper bedrifter i Innlandet med å ta i bruk AI – fra kartlegging og verktøyvalg til implementering, automatisering og opplæring. Alt tilpasset din bedrift.',
+      options: [
+        { label: 'Fortell om kartlegging', next: 'kartlegging' },
+        { label: 'Hva med automatisering?', next: 'auto' },
+        { label: 'Tilbake til start', next: 'root' }
+      ]
+    },
+    kartlegging: {
+      msg: 'Vi gjør en grundig gjennomgang av bedriftens arbeidsprosesser og identifiserer hvor AI gir størst verdi. Du får en konkret handlingsplan med anbefalte verktøy og estimert gevinst.',
+      options: [
+        { label: 'Hvordan komme i gang?', next: 'kontakt' },
+        { label: 'Hva koster det?', next: 'pris' },
+        { label: 'Tilbake til start', next: 'root' }
+      ]
+    },
+    auto: {
+      msg: 'Vi automatiserer rutineoppgaver innen kundeservice, markedsføring, regnskap og salg med AI. Typisk sparer bedrifter 10+ timer i uken. Vi har blant annet bygget AI-chatboter, stemmeassistenter og bilagstolkning.',
+      options: [
+        { label: 'Fortell om kartlegging', next: 'kartlegging' },
+        { label: 'Jeg vil ta kontakt', next: 'kontakt' },
+        { label: 'Tilbake til start', next: 'root' }
+      ]
+    },
+    omoss: {
+      msg: 'AI Innlandet er et lokalt rådgivningsselskap i Hedmark og Oppland. Vi gjør AI praktisk, forståelig og lønnsomt – uten tech-sjargong. Vi kjenner bedriftene og bransjene i Innlandet og er resultatfokuserte.',
+      options: [
+        { label: 'Hva tilbyr dere?', next: 'tjenester' },
+        { label: 'Er det trygt for data?', next: 'gdpr' },
+        { label: 'Tilbake til start', next: 'root' }
+      ]
+    },
+    gdpr: {
+      msg: 'Ja – vi anbefaler kun GDPR-kompatible løsninger og hjelper dere å sette opp rutiner som beskytter sensitiv informasjon. Vi er alltid åpne om hvor data sendes og lagres.',
+      options: [
+        { label: 'Jeg vil ta kontakt', next: 'kontakt' },
+        { label: 'Tilbake til start', next: 'root' }
+      ]
+    },
+    pris: {
+      msg: 'Vi starter alltid med en uforpliktende samtale for å bli kjent. Deretter tilpasses kartlegging og videre arbeid til bedriftens størrelse og behov. Ta kontakt så finner vi ut hva som passer for dere.',
+      options: [
+        { label: 'Ta kontakt', next: 'kontakt' },
+        { label: 'Hva tilbyr dere?', next: 'tjenester' },
+        { label: 'Tilbake til start', next: 'root' }
+      ]
+    },
+    kontakt: {
+      msg: 'Fyll ut skjemaet lenger ned på siden, eller send oss en e-post på <a href="mailto:roger@synligbedrift.no" style="color:var(--primary)">roger@synligbedrift.no</a>. Vi svarer innen 24 timer på hverdager!',
+      options: [
+        { label: 'Gå til kontaktskjema ↓', action: 'scroll-kontakt' },
+        { label: 'Tilbake til start', next: 'root' }
+      ]
+    }
+  };
+
+  function addMsg(text, cls) {
+    const d = document.createElement('div');
+    d.className = 'chat-msg ' + cls;
+    d.innerHTML = text;
+    msgBox.appendChild(d);
+    msgBox.scrollTop = msgBox.scrollHeight;
+    return d;
+  }
+
+  function showTyping() {
+    const d = addMsg('<span class="dots"><span></span><span></span><span></span></span>', 'bot typing');
+    return d;
+  }
+
+  function showOptions(opts) {
+    optBox.innerHTML = '';
+    opts.forEach(function(o) {
+      const b = document.createElement('button');
+      b.className = 'chat-opt';
+      b.textContent = o.label;
+      b.onclick = function() { handleChoice(o); };
+      optBox.appendChild(b);
+    });
+  }
+
+  function handleChoice(opt) {
+    addMsg(opt.label, 'user');
+    optBox.innerHTML = '';
+    if (opt.action === 'scroll-kontakt') {
+      document.getElementById('kontakt').scrollIntoView({ behavior: 'smooth' });
+      win.classList.remove('open');
+      return;
+    }
+    var node = tree[opt.next];
+    if (!node) return;
+    var typing = showTyping();
+    setTimeout(function() {
+      typing.remove();
+      if (node.msg) addMsg(node.msg, 'bot');
+      if (node.options) showOptions(node.options);
+    }, 600 + Math.random() * 400);
+  }
+
+  toggle.onclick = function() {
+    win.classList.toggle('open');
+    if (win.classList.contains('open') && optBox.children.length === 0) {
+      showOptions(tree.root.options);
+    }
+  };
+  closeBtn.onclick = function() { win.classList.remove('open'); };
+})();
+</script>
+
 </body>
 </html>
