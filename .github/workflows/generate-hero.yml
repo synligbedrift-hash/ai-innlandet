@@ -1,8 +1,8 @@
 name: Generer hero-bilde
 
 on:
-  schedule:
-    - cron: '0 * * * *'  # Hver hele time
+  # schedule:
+  #   - cron: '0 * * * *'  # Hver hele time (skrudd av for å spare credits)
   workflow_dispatch:       # Manuell kjøring
 
 permissions:
